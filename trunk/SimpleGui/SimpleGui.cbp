@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="SimpleGui" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug Win32">
+				<Option output="$(SolutionDir)Debug Win32\libSimpleGui-d" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="Debug Win32" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-DWIN32" />
+					<Add option="-D_DEBUG" />
+					<Add option="-D_WINDOWS" />
+					<Add option="-W" />
+					<Add option="-g" />
+					<Add option="-O0" />
+				</Compiler>
+				<Linker>
+					<Add library="tinyxml" />
+				</Linker>
+			</Target>
+			<Target title="Release Win32">
+				<Option output="lib" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="Release Win32" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-DWIN32" />
+					<Add option="-DNDEBUG" />
+					<Add option="-D_WINDOWS" />
+					<Add option="-W" />
+					<Add option="-O2" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Unit filename="..\src\GuiManager.cpp" />
+		<Unit filename="..\include\GUI\GuiManager.hpp" />
+		<Unit filename="..\src\Widget.cpp" />
+		<Unit filename="..\include\GUI\Widget.hpp" />
+		<Unit filename="..\src\LineEdit.cpp" />
+		<Unit filename="..\include\GUI\LineEdit.hpp" />
+		<Unit filename="..\src\RadioBox.cpp" />
+		<Unit filename="..\include\GUI\RadioBox.hpp" />
+		<Unit filename="..\src\Button.cpp" />
+		<Unit filename="..\include\GUI\Button.hpp" />
+		<Unit filename="..\src\CheckBox.cpp" />
+		<Unit filename="..\include\GUI\CheckBox.hpp" />
+		<Unit filename="..\src\Label.cpp" />
+		<Unit filename="..\include\GUI\Label.hpp" />
+		<Unit filename="..\src\Slider.cpp" />
+		<Unit filename="..\include\GUI\Slider.hpp" />
+		<Unit filename="..\src\TextArea.cpp" />
+		<Unit filename="..\include\GUI\TextArea.hpp" />
+		<Unit filename="..\src\Window.cpp" />
+		<Unit filename="..\include\GUI\Window.hpp" />
+		<Unit filename="..\src\TitleBar.cpp" />
+		<Unit filename="..\include\GUI\TitleBar.hpp" />
+		<Unit filename="..\src\Debug.cpp" />
+		<Unit filename="..\include\GUI\Debug.hpp" />
+		<Unit filename="..\src\Defines.cpp" />
+		<Unit filename="..\include\GUI\Defines.hpp" />
+		<Unit filename="..\src\Settings.cpp" />
+		<Unit filename="..\include\GUI\Settings.hpp" />
+		<Unit filename="..\src\Property.cpp" />
+		<Unit filename="..\include\GUI\Property.hpp" />
+		<Unit filename="..\src\Theme.cpp" />
+		<Unit filename="..\include\GUI\Theme.hpp" />
+		<Unit filename="..\src\Event.cpp" />
+		<Unit filename="..\include\GUI\Event.hpp" />
+		<Unit filename="..\include\GUI\AbstractFactory.hpp" />
+		<Unit filename="..\src\DefaultFactory.cpp" />
+		<Unit filename="..\include\GUI\DefaultFactory.hpp" />
+		<Unit filename="..\src\XmlParser.cpp" />
+		<Unit filename="..\include\GUI\XmlParser.hpp" />
+		<Unit filename="..\src\GuiMgrParser.cpp" />
+		<Unit filename="..\include\GUI\GuiMgrParser.hpp" />
+		<Unit filename="..\src\Mediator.cpp" />
+		<Unit filename="..\include\GUI\Mediator.hpp" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
