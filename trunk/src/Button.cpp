@@ -4,18 +4,6 @@
 
 namespace gui
 {
-
-/*
-	void Button::SetDefaultImage()
-	{
-		sprite.SetImage(ImageManager::GetSingleton().GetImage("assets/gfx/but1.png", "default_but_active"));
-		inactiveSprite.SetImage(ImageManager::GetSingleton().GetImage("assets/gfx/but2.png", "default_but_inactive"));
-
-		Resize(75,50);
-
-	}
-*/
-
 	void Button::SetActiveImage()
 	{
 		sf::Color temp = m_shape.GetColor();
