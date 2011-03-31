@@ -234,24 +234,6 @@ namespace gui
 		currentListener = "default";
 	}
 
-	void GuiMgrParser::ExtractPath( const std::string& t, std::vector<std::string>& v) const
-	{
-		uint32 pos = 0;
-		std::string ptemp = t;
-		std::string temp;
-		while(ptemp.size()) {
-			pos = ptemp.find_first_of('.');
-			if(pos == std::string::npos) {
-				temp = ptemp; 
-				ptemp.clear();
-			} else {
-				temp = ptemp.substr(0,pos);
-				ptemp.erase(0,pos+1);
-			}
-			v.push_back(temp);
-		}
-	}
-
 	//compiles listener/commander connections inside widgets
 	void GuiMgrParser::CompileWidget( WidgetInfo& info )
 	{

@@ -18,7 +18,6 @@ namespace gui
 		GuiMgrParser(GuiManager* mgr=NULL);
 		void SetGui(GuiManager* mgr);
 		void Parse(TiXmlNode* node, bool loadLayout = false);
-		void ExtractPath(const std::string&, std::vector<std::string>&) const;
 	protected:
 		void IterateTags(TiXmlNode* node);
 		void OnXmlElement(TiXmlElement* node);

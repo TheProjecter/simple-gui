@@ -5,13 +5,14 @@
 namespace gui
 {
 	class Widget;
+	class GuiManager;
 
 	class Drag 
 	{
 	public:
 
 		enum DragStatus {
-			None,
+			NotStarted,
 			Running,
 			Finished
 		};
@@ -23,8 +24,10 @@ namespace gui
 
 		//allowed places to drop a widget
 		enum DropFlags {
+			None,
 			ParentOnly,
 			WidgetOnly,
+			GuiOnly,
 			Anywhere
 		};
 
@@ -42,10 +45,11 @@ namespace gui
 		const sf::Vector2f& GetStartPos() const;
 		const sf::Vector2f& GetCurrentPos() const;
 		void SetPos(const sf::Vector2f& pos);
+		void SetPos(int x, int y);
 
 		uint32 GetDropStatus() const;
 		uint32 GetStatus() const;
-		uint32 GetDragType() const;
+		uint32 GetType() const;
 
 		void StopDrag();
 		bool IsRunning() const;
@@ -53,6 +57,9 @@ namespace gui
 
 		void SetForcedMove(bool flag);
 		bool GetForcedMove() const;
+
+		DropFlags GetDragFlags() const;
+		void SetDragFlags(DropFlags val);
 
 		gui::Widget* GetTarget() const;
 		gui::Widget* GetTargetParent() const;
@@ -66,8 +73,7 @@ namespace gui
 		std::string m_dropErrors;	//stores the results when a drop fails
 		uint32 m_status;			//current status of the drag(NONE,RUNNING,FINISHED)
 		uint32 m_type;				//the drag type (Widget, Text, Image, etc?)
-
-		uint32 m_curDragDist;		//the current drag distance, will stop updating when in RUNNING status
+		DropFlags m_forceDragFlags;	//forces the widget to change the drop flags
 		uint32 m_minDragDist;		//the min amount of distance it takes for drag to start
 		
 		gui::Widget* m_target;		//the widget being dragged
@@ -76,5 +82,6 @@ namespace gui
 
 		bool m_forceMove;			//forces any widget to move irregardless of flags
 	private:
+		friend class GuiManager;
 	};
 }

@@ -34,9 +34,13 @@ namespace gui {
 		bool IsSolid() const;
 		void SetSolid(bool flag);
 
-		Widget* FindChildByName(const std::string& name);
+		Widget* FindChildByName(const std::string& name) const;
 		std::string GetWidgetPath() const;
+		Widget* QueryWidget(const std::string& path) const;
+		std::vector<Widget*> GetWidgetStackPath() const;
 		WidgetList& GetWidgetList() const;
+		Widget* GetWidgetAt(const sf::Vector2f& pos) const;
+		Widget* GetWidgetAt(int x, int y) const;
 		Settings& GetSettings() const;
 
 		virtual void SetParent(Widget* parent);
@@ -89,6 +93,9 @@ namespace gui {
 
 		Drag::DropFlags GetDropFlags() const;
 		virtual bool AcceptsDrop(Drag* drag) const;
+		
+		bool IsDead() const;
+		void Kill();
 
 	protected:
 		/* Attributes */
@@ -120,23 +127,24 @@ namespace gui {
 		mutable Settings m_settings;		//stores changed settings,size,pos,colors etc to be saved/loaded
 		mutable Mediator m_mediator;		//handles communication between other widgets and/or gui
 		Drag::DropFlags m_dropFlags;		//specifies the drop policy(where the widget may be dropped)
+		bool m_dead;						//if widget committed suicided it will be removed at the next updated
+		std::vector<Widget*> m_freeWidgets;	//widgets that will be deleted at each updated, if any
 		
 		/* Static member data */
 		static GuiManager* s_gui;			//pointer to the current gui
 
-
 		static void ConvertCoords(sf::Vector2f& coords);
 
 		/* Widget specific events */
-		void OnResize();
-		void OnMove();
-		void OnShow();
-		void OnHide();
-		void OnDestroy();
-		void OnHover();
-		void OnHoverLost();
-		void OnFocus();
-		void OnFocusLost();
+		virtual void OnResize();
+		virtual void OnMove();
+		virtual void OnShow();
+		virtual void OnHide();
+		virtual void OnDestroy();
+		virtual void OnHover();
+		virtual void OnHoverLost();
+		virtual void OnFocus();
+		virtual void OnFocusLost();
 
 		//event handling functions -- overload these in derivate widgets
 		virtual void OnEvent(sf::Event* event);
@@ -171,10 +179,12 @@ namespace gui {
 		virtual void HandleDragMove(Drag* drag);	//will be called when the drag moves
 		virtual void HandleDragDraw(Drag* drag);	//will be called when the drag needs to be drawn
 		virtual void HandleDragStop(Drag* drag);	//will be called when the drag ended
+		virtual void HandleDragDrop(Drag* drag);	//will be called when you receive a drop
+		virtual void SetPosFromDrag(Drag* drag);
 
 	private:
-		bool m_drag;
-		int m_hotSpotX, m_hotSpotY;
+ 		bool m_drag;
+ 		int m_hotSpotX, m_hotSpotY;
 		void _DispatchEvent(sf::Event* event);
 		void _StartDrag(int x, int y);
 		void _LoseFocus(bool forgetFocus = true);

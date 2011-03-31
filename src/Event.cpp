@@ -108,4 +108,16 @@ namespace gui
 		return m_type;
 	}
 
+
+	OnDrag::OnDrag( Widget* widget, Drag* drag ): 
+					WidgetEvent(widget)
+	{
+		m_type = events::OnDrag;
+		m_drag = drag;
+	}
+
+	Drag* OnDrag::GetDrag() const
+	{
+		return m_drag;
+	}
 }

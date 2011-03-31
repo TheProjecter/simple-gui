@@ -6,7 +6,7 @@ namespace gui
 {
 	const sf::Vector2f& Drag::GetStartPos() const
 	{
-		return m_curPos;
+		return m_startPos;
 	}
 
 	const sf::Vector2f& Drag::GetCurrentPos() const
@@ -16,21 +16,35 @@ namespace gui
 
 	void Drag::SetPos( const sf::Vector2f& pos )
 	{
-		if(m_status == None) {
-			float dist = ComputeDistance(pos,m_curPos);
+		if(m_status == NotStarted) {
+			float dist = ComputeDistance(pos,m_startPos);
+
+			//enable the drag
 			if((uint32)dist > m_minDragDist ) 
 				m_status = Running;
-		} else if(m_status == Running) {
+		} 
+		
+		if(m_status == Running) {
 			m_curPos.x = pos.x - m_hotSpot.x;
 			m_curPos.y = pos.y - m_hotSpot.y;
 		}
 	}
 
-	Drag::Drag( gui::Widget* target, sf::Event* event ):
-		  m_target(target), m_forceMove(false), m_type(Drag::Widget)
+	void Drag::SetPos( int x, int y )
+	{
+		SetPos(sf::Vector2f((float)x, (float)y));
+	}
+
+	Drag::Drag( gui::Widget* target, sf::Event* event):
+		  m_target(target), m_forceMove(false), m_type(Drag::Widget),
+		  m_minDragDist(5), m_status(NotStarted), m_focusTarget(NULL),
+		  m_dropStatus(NotStarted)
 	{
 		if(m_target) {
+			m_forceDragFlags = m_target->GetDropFlags();
 			if(event) {
+				m_targetParent = m_target->GetParent();
+
 				//get the current position of the widget
 				m_startPos = m_target->GetRect().GetPos();
 				m_curPos = m_startPos;
@@ -42,7 +56,6 @@ namespace gui
 				m_hotSpot.x = temp.x - m_startPos.x;
 				m_hotSpot.y = temp.y - m_startPos.y;
 
-				m_targetParent = m_target->GetParent();
 			} else {
 				error_log("Created drag with NULL event! Possible Crash ?");
 			}
@@ -120,9 +133,18 @@ namespace gui
 		return m_forceMove;
 	}
 
-	gui::uint32 Drag::GetDragType() const
+	gui::uint32 Drag::GetType() const
 	{
 		return m_type;
 	}
 
+	gui::Drag::DropFlags Drag::GetDragFlags() const
+	{
+		return m_forceDragFlags;
+	}
+
+	void Drag::SetDragFlags( DropFlags val )
+	{
+		m_forceDragFlags = val;
+	}
 }

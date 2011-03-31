@@ -28,11 +28,13 @@ namespace gui {
 	};
 
 	namespace events {
+		//TODO: Fix events inside widgets, make a WidgetSfEvent or something
 		enum Events {
 
 			/* Widget specific events */
 			OnResize = sf::Event::Count,
 			OnMove,
+			OnDrag,
 			OnShow,
 			OnHide,
 			OnDestroy,
@@ -111,6 +113,7 @@ namespace gui {
 	uint32 ColorToUnsigned(const sf::Color& color);
 
 	void InsertChar(std::ostream& os, char c, uint32 count);
+	void ExtractPath(const std::string& path, std::vector<std::string>& v);
 }
 
 std::ostream& operator<<( std::ostream& os, gui::Rect& rect);
