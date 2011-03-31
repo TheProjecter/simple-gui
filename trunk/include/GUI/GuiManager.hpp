@@ -78,7 +78,7 @@ namespace gui {
 		void MoveDrag(sf::Event* event);
 		void StopDrag(int x, int y);				
 
-		Widget* GetLastWidgetAt(int x, int y) const;
+		Widget* GetLastWidgetAt(int x, int y, Widget* skip = NULL) const;
 		void UpdateDragFocus(int x, int y);
 		void ClearWidgets();
 		void FreeWidgets();

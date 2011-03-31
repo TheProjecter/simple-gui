@@ -26,6 +26,8 @@ namespace gui
 		virtual void Update(float diff);
 		virtual void Draw() const;
 		void InitGraphics();
+		virtual void HandleDragMove(Drag* drag) {}	//don't handle drags
+		virtual void HandleDragStop(Drag* drag) {}
 
 	private:
 		ButtonStyle m_buttonStyle;

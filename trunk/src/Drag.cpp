@@ -107,10 +107,11 @@ namespace gui
 		return m_dropStatus;
 	}
 
-	void Drag::StopDrag()
+	bool Drag::StopDrag()
 	{
 		if(m_status == Running)
 			m_status = Finished;
+		else return false;
 
 		if(!m_focusTarget) {
 			//if the current target can't be dropped directly to the gui, the drop failed!
@@ -118,9 +119,12 @@ namespace gui
 				m_dropStatus = Failed;
 			}
 		} else {
-			if(!m_target->AcceptsDrop(this)) m_dropStatus = Succesful;
+			if(m_target->AcceptsDrop(this)) 
+				m_dropStatus = Succesful;
 			else m_dropStatus = Failed;
 		}
+
+		return true;
 	}
 
 	void Drag::SetForcedMove( bool flag )

@@ -74,4 +74,19 @@ namespace gui
 	{
 		//don't move from dragging.. only move when the titlebar was moved!
 	}
+
+	void Window::HandleDragStop( Drag* drag )
+	{
+		//basic widget drag-stop policy, other might do something different
+		if(!drag) return;
+		if(drag->GetStatus() != Drag::Finished) return;
+
+		Widget* target = drag->GetTarget();
+
+		//the titlebar movement is special.. don't count it
+		if(target->GetType() == TITLE_BAR) return;
+		
+		//if it's not the titlebar.. do the usual
+		Widget::HandleDragStop(drag);
+	}
 }
