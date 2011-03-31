@@ -263,6 +263,24 @@ namespace gui {
 
 		return dist;
 	}
+
+	void ExtractPath( const std::string& path, std::vector<std::string>& v )
+	{
+		uint32 pos = 0;
+		std::string ptemp = path;
+		std::string temp;
+		while(ptemp.size()) {
+			pos = ptemp.find_first_of('.');
+			if(pos == std::string::npos) {
+				temp = ptemp; 
+				ptemp.clear();
+			} else {
+				temp = ptemp.substr(0,pos);
+				ptemp.erase(0,pos+1);
+			}
+			v.push_back(temp);
+		}
+	}
 }	//end of namespace gui
 
 

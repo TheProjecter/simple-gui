@@ -12,7 +12,7 @@ namespace gui {
 		if(s_gui->GetWindow())
 			s_gui->GetWindow()->Draw(text);
 	}
-	void Label::SetPos(int x, int y)
+	void Label::SetPos(int x, int y, bool forceMove /*=false*/)
 	{
 		m_rect.x = x; m_rect.y = y;  
 		switch(alignment) {

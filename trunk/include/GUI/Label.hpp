@@ -8,7 +8,7 @@ namespace gui {
 	class Label: public Widget {
 	public:
 		Label();
-		void SetPos(int x, int y);
+		void SetPos(int x, int y, bool forceMove = false);
 		void SetAlignment(Alignment a);
 
 	private:

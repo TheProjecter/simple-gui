@@ -16,8 +16,11 @@ namespace gui {
 					m_resizable(true),m_isFocus(false),m_transparency(200),
 					m_individualTheme(false), m_hovering(false),
 					m_hoverTarget(NULL), m_solid(false), m_allowSave(true),
-					m_sprite(NULL)
+					m_sprite(NULL),m_dropFlags(Drag::WidgetOnly),
+					m_dead(false)
 	{
+		m_mediator.SetCurrentPath(m_name);
+
 		//set theme/default colors
 		if(s_gui->GetTheme() && s_gui->GetTheme()->HasProperty("widget_background_color"))
 			m_shape.SetColor(s_gui->GetTheme()->GetColor("widget_background_color"));
@@ -30,9 +33,11 @@ namespace gui {
 		m_hotSpotX(0), m_hotSpotY(0), m_needUpdate(true),m_resizable(true),
 		m_isFocus(true),m_transparency(200), m_individualTheme(false),
 		m_hovering(true),m_hoverTarget(NULL), m_solid(false), 
-		m_allowSave(true), m_sprite(NULL)
+		m_allowSave(true), m_sprite(NULL),m_dropFlags(Drag::WidgetOnly),
+		m_dead(false)
 	{
 		this->m_name = name;
+		m_mediator.SetCurrentPath(name);
 
 		//set theme/default colors
 		if(s_gui->GetTheme() && s_gui->GetTheme()->HasProperty("widget_background_color"))
@@ -49,6 +54,8 @@ namespace gui {
 			delete it->second;
 		}
 		m_widgets.clear();
+		m_mediator.ClearConnections();
+		m_mediator.ConsumeEvents();
 	}
 
 	void Widget::SetMovable( bool flag )
@@ -167,9 +174,9 @@ namespace gui {
 		m_rect.y = y;
 
 		//error checking to keep widgets in place
-		if(m_parent) {
+		if(m_parent && m_dropFlags == Drag::WidgetOnly) {
 			const Rect& prect = m_parent->GetRect();
-			const WidgetList widgets = m_parent->GetWidgetList();
+			const WidgetList& widgets = m_parent->GetWidgetList();
 
 			//don't allowed then leave the parent's rect
 			if(m_rect.x < prect.x)
@@ -177,11 +184,11 @@ namespace gui {
 			if(m_rect.y < prect.y)
 				m_rect.y = prect.y;
 
-			//child widgets can't be bigger than parent widgets
-			if(m_rect.w > prect.w) 
-				m_rect.w = prect.w;
-			if(m_rect.h > prect.h) 
-				m_rect.h = prect.h;
+// 			//child widgets CAN? be bigger than parent widgets
+// 			if(m_rect.w > prect.w) 
+// 				m_rect.w = prect.w;
+// 			if(m_rect.h > prect.h) 
+// 				m_rect.h = prect.h;
 
 			//don't allowed then leave the parent's rect
 			if(m_rect.x+m_rect.w > prect.x+prect.w) {
@@ -199,23 +206,24 @@ namespace gui {
 			int ypos = m_rect.y - temp.y + childRect.y ;
 			widget->SetPos(xpos,ypos,true); //force child widgets to move!
 		}
-		ResolveChildCollisions();
-		OnMove();
-
+		ResolveChildCollisions();	//this is slightly broken!
 		m_settings.SetInt32Value("posx",m_rect.x);
 		m_settings.SetInt32Value("posy",m_rect.y);
-		m_settings.SetUint32Value("width", m_rect.w);
-		m_settings.SetUint32Value("height", m_rect.h);
+// 		m_settings.SetUint32Value("width", m_rect.w);
+// 		m_settings.SetUint32Value("height", m_rect.h);
 
 		if(!m_sprite)
 			m_shape.SetPosition(m_rect.GetPos());
 		else m_sprite->SetPosition(m_rect.GetPos());
+
+		OnMove();
 	}
 
 	void Widget::SetPos( const sf::Vector2f& pos, bool forceMove /*= false*/)
 	{
 		SetPos((int)pos.x,(int)pos.y,forceMove);
 	}
+
 	const Rect& Widget::GetRect() const
 	{
 		return m_rect;
@@ -229,7 +237,10 @@ namespace gui {
 	bool Widget::AddWidget( Widget* child )
 	{
 		if(!child) return false;
-		if(FindChildByName(child->GetName())) return false;
+		if(FindChildByName(child->GetName())) {
+			debug_log("Couldn't add widget \"%s\" to widget: \"%s\"",m_name.c_str(),child->GetName().c_str());		
+			return false;
+		}
 
 		child->SetParent(this);
 		child->SetId(++index);
@@ -246,15 +257,16 @@ namespace gui {
 			WidgetList::iterator it = m_widgets.find(child->GetId());
 
 			if(it != m_widgets.end()) {
-				m_widgets.erase(it);
-				delete child;
+				m_freeWidgets.push_back(child);
 			}
 		}
 	}
 
-	Widget* Widget::FindChildByName( const std::string& name )
+	Widget* Widget::FindChildByName( const std::string& name ) const
 	{
-		for(WidgetList::iterator it = m_widgets.begin(); it != m_widgets.end(); it++) {
+		for(WidgetList::const_iterator it = m_widgets.begin(); 
+			it != m_widgets.end(); it++) 
+		{
 			if(it->second->GetName() == name) {
 				return it->second;
 			}
@@ -311,6 +323,7 @@ namespace gui {
 	void Widget::SetName( const std::string& newName )
 	{
 		m_name = newName;
+		m_mediator.SetCurrentPath(GetWidgetPath());
 	}
 
 	const std::string& Widget::GetName() const
@@ -320,15 +333,36 @@ namespace gui {
 
 	void Widget::Update( float diff )
 	{
-		if(!m_visible || !s_gui->GetWindow()) return;
+		if(m_dead || !s_gui->GetWindow()) return;
 		
 		//handle the events..also takes care of child widget events
 		_HandleEvents();
 
+		//check if the current focus just died
+		if(m_focus && m_focus->IsDead()) 
+			m_focus = NULL;
+		if(m_hoverTarget && m_hoverTarget->IsDead())
+			m_hoverTarget = NULL;
+
 		for(WidgetList::iterator it=m_widgets.begin(); it!=m_widgets.end();it++) {
-			it->second->Update(diff);
+			if(it->second->IsDead()) {
+				m_freeWidgets.push_back(it->second);
+			} else it->second->Update(diff);
 		}
 
+		//free the dead widgets
+		for(uint32 i=0;i<m_freeWidgets.size(); i++) {
+			uint32 guid = m_freeWidgets[i]->GetId();
+			WidgetList::iterator it = m_widgets.find(guid);
+			if(it != m_widgets.end()) {
+				delete it->second;
+				m_widgets.erase(it);
+			} else {
+				debug_log("Couldn't find widget \"%s\" for some reason.",m_freeWidgets[i]->GetName());
+			}
+		}
+
+		m_freeWidgets.clear();
 		//update animations if needed, etc
 	}
 
@@ -394,7 +428,8 @@ namespace gui {
 	{
 		if(!s_gui->GetWindow()) return;
 
-		s_gui->GetWindow()->Draw(m_shape);
+		if(m_visible)
+			s_gui->GetWindow()->Draw(m_shape);
 
 		//also draw children if any
 		for(WidgetList::const_iterator it = m_widgets.begin(); it != m_widgets.end(); it++) {
@@ -403,6 +438,7 @@ namespace gui {
 	}
 
 
+	//deprecated?
 	void Widget::Draw( const sf::Image* image )
 	{
 		if(!image || !s_gui->GetWindow()) return;
@@ -792,6 +828,7 @@ namespace gui {
 		}
 	}
 
+	//in the form of: "parent.child.leaf"
 	std::string Widget::GetWidgetPath() const
 	{
 		std::stack<Widget*> stack;
@@ -848,8 +885,8 @@ namespace gui {
 
 	void Widget::OnHoverLost()
 	{
-		glEnable(GL_SCISSOR_TEST);
-		glDisable(GL_SCISSOR_TEST);
+// 		glEnable(GL_SCISSOR_TEST);
+// 		glDisable(GL_SCISSOR_TEST);
 		m_hovering = false;
 		m_mediator.PostEvent(new gui::OnHoverLost(this));
 	}
@@ -871,12 +908,12 @@ namespace gui {
 
 	bool Widget::IsCollision( const Rect& rect ) const
 	{
-		return gui::IsCollision(m_rect,rect);
+		return m_visible ? gui::IsCollision(m_rect,rect) : false;
 	}
 
 	bool Widget::IsCollision( const Rect& rect, sf::Vector2f& normal ) const
 	{
-		return gui::IsCollision(m_rect,rect, normal);
+		return m_visible ? gui::IsCollision(m_rect,rect, normal) : false;
 	}
 
 	void Widget::SaveUI( TiXmlNode* node ) const
@@ -979,7 +1016,9 @@ namespace gui {
 
 	bool Widget::AcceptsDrop( Drag* drag ) const
 	{
-		//basic widgets accept drops by defaults
+		if(!drag) return false;
+		if(drag->GetType() != Drag::Widget) return false;
+
 		return true;
 	}
 
@@ -999,7 +1038,22 @@ namespace gui {
 		
 		//basic widget specific child-movement policy, 
 		//other widget might move child widgets differently
-		target->SetPos(drag->GetCurrentPos(),drag->GetForcedMove());
+		target->SetPosFromDrag(drag);
+	}
+
+	void Widget::HandleDragDrop( Drag* drag )
+	{
+		//basic widget specific receive drop policy
+		//only accept drops of type Widget
+		if(!drag) return;
+
+		//this should never happen, but check anyways
+		if(drag->GetType() != Drag::Widget) return;
+
+		//the default receive drop policy is to add the widget to this
+		if(!AddWidget(drag->GetTarget())) {
+			error_log("Unable to complete the drop!");
+		}
 	}
 
 	void Widget::HandleDragDraw( Drag* drag )
@@ -1032,10 +1086,83 @@ namespace gui {
 				} else {
 					//it's inside another widget.. 
 					Widget* parent = drag->GetCurrentFocus();
-					parent->AddWidget(target);
+					//parent->AddWidget(target);
+					parent->HandleDragDrop(drag);
 					this->DeleteWidget(target->GetName());
 				}
 			}
 		}
+	}
+
+	Widget* Widget::GetWidgetAt( int x, int y ) const
+	{
+		Rect rect = Rect(x,y,1,1);
+		for(WidgetList::const_iterator it = m_widgets.begin(); 
+			it != m_widgets.end(); it++) 
+		{
+			if(it->second->IsCollision(rect)) {
+				return it->second;
+			}
+		}
+		return NULL;	
+	}
+
+	Widget* Widget::GetWidgetAt( const sf::Vector2f& pos ) const
+	{
+		return GetWidgetAt((int)pos.x, (int)pos.y);
+	}
+
+	//in this order: leaf->child->parent
+	std::vector<Widget*> Widget::GetWidgetStackPath() const
+	{
+		std::vector<Widget*> v;
+		v.push_back(const_cast<Widget*>(this));
+
+		Widget* parent = m_parent;
+		while(parent) {
+			v.push_back(parent);
+			parent = parent->GetParent();
+		}
+		return v;
+	}
+
+	void Widget::SetPosFromDrag( Drag* drag )
+	{
+		Drag::DropFlags temp = m_dropFlags;
+			m_dropFlags = drag->GetDragFlags();
+			SetPos(drag->GetCurrentPos(), drag->GetForcedMove());
+			
+			//create the drag event
+			m_mediator.PostEvent(new gui::OnDrag(this,drag));
+
+		m_dropFlags = temp;
+	}
+
+	Widget* Widget::QueryWidget( const std::string& path ) const
+	{
+		std::vector<std::string> temp;
+		ExtractPath(path,temp);
+
+		if(!temp.size()) return NULL;
+
+		Widget* cur = NULL;
+		for(uint32 i=0; i<temp.size(); i++) {
+			cur = FindChildByName(temp[i]);
+			if(!cur) {
+				error_log("Unable to complete query \"%s\". Widget \"%s\" not found!", path.c_str(),temp[i]);
+				return NULL;
+			}
+		}
+		return cur;
+	}
+
+	bool Widget::IsDead() const
+	{
+		return m_dead;
+	}
+
+	void Widget::Kill()
+	{
+		m_dead = true;
 	}
 }

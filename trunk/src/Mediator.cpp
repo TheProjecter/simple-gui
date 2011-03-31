@@ -2,9 +2,11 @@
 #include "../include/gui/Debug.hpp"
 #include <tinyxml.h>
 #include "../include/gui/Widget.hpp"
+#include "../include/gui/GuiManager.hpp"
 
 namespace gui 
 {
+	GuiManager* Mediator::s_currentGui = NULL;
 
 	Dispatcher& Mediator::GetDispatcher() const
 	{
@@ -56,14 +58,7 @@ namespace gui
 
 	Mediator::~Mediator()
 	{
-		for(ListnerList::iterator it = m_listeners.begin(); it != m_listeners.end(); it++) {
-			//free events from all listeners
-			SwitchListener(it->first);
-
-			while(GetEvent()) {
-				//consume events.. so they get freed
-			}
-		}
+		ConsumeEvents();
 		ClearConnections();
 	}
 
@@ -115,23 +110,51 @@ namespace gui
 		return m_currentListener;
 	}
 
-	void Mediator::Connect( Widget* widget, const std::string& my_listener, 
+	bool Mediator::Connect( Widget* widget, const std::string& my_listener, 
 							uint32 eventType, 
 							bool saveConnection /*= true*/ )
 	{
-		if(!widget) return;
+		if(!widget) return false;
 
 		Mediator& with = widget->GetMediator();
 		Listener* myListener = GetListener(my_listener);
 		
-		if(!myListener) return;
+		if(!myListener) return false;
 
 		with.GetDispatcher().RegisterListener(eventType,myListener);
+
+		if(!saveConnection) return true;
 
 		ConnectionInfo* c = new ConnectionInfo(saveConnection);
 		c->widgetPaths.push_back(ListenerEventPair(widget->GetWidgetPath(),eventType));
 
 		m_connections[my_listener].push_back(c);
+		return true;
+	}
+
+	bool Mediator::Connect( const std::string& path, const std::string& 
+							my_listner, uint32 eventType, 
+							bool saveConnection /*= true*/ )
+	{
+		if(!s_currentGui) {
+			error_log("Unable to complete query! Couldn't find the current gui manager!");
+			return false;
+		}
+		std::string temp = m_currentPath.size() ? m_currentPath + "." + path 
+												: path; 
+		Widget* w = s_currentGui->QueryWidget(temp);
+
+		return Connect(w, my_listner,eventType,saveConnection);
+	}
+
+	bool Mediator::Connect( Widget* current, const std::string& path, const std::string& my_listener, uint32 eventType, bool saveConnection /*= true*/ )
+	{
+		if(!current) {
+			error_log("Unable to complete query! Couldn't find the current gui manager!");
+			return false;
+		}
+		Widget* w = current->QueryWidget(path);
+		return Connect(w, my_listener, eventType, saveConnection);
 	}
 
 	void Mediator::ClearConnections()
@@ -142,6 +165,23 @@ namespace gui
 			}
 		}
 		m_connections.clear();
+	}
+
+	void Mediator::ConsumeEvents()
+	{
+		for(ListnerList::iterator it = m_listeners.begin(); it != m_listeners.end(); it++) {
+			//free events from all listeners
+			SwitchListener(it->first);
+
+			while(GetEvent()) {
+				//consume events.. so they get freed
+			}
+		}
+	}
+
+	void Mediator::SetCurrentPath( const std::string& path )
+	{
+		m_currentPath = path;
 	}
 
 	bool Dispatcher::CaresAbout( uint32 eventType )
@@ -186,6 +226,27 @@ namespace gui
 	void Dispatcher::RegisterListener( uint32 eventType, Listener* listener )
 	{
 		m_listeners[eventType].push_back(listener);
+	}
+
+	void Dispatcher::ClearListeners()
+	{
+		m_listeners.clear();
+	}
+
+	bool Dispatcher::UnRegisterListner( uint32 eventType, Listener* listener )
+	{
+		std::map<uint32, std::vector<Listener*> >::iterator it;
+		it = m_listeners.find(eventType);
+		if(it == m_listeners.end()) return false;
+
+		std::vector<Listener*>& v = it->second;
+		for(std::vector<Listener*>::const_iterator i=v.begin(); i != v.end(); i++) {
+			if(listener == (*i)) {
+				v.erase(i);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	void Listener::push(Event* e)

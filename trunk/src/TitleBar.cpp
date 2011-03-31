@@ -7,14 +7,16 @@ namespace gui
 {
 	class OnResize;
 
-	TitleBar::TitleBar( Widget* parent , const std::string& text, 
-						ButtonStyle buttonStyle)
+	TitleBar::TitleBar( const std::string& text, ButtonStyle buttonStyle)
 	{
 		//there can only be ONE titlebar per window, and this will be its name
 		m_name = "my_titlebar";
 
 		//title-bars can't be moved!
 		m_movable = false;
+
+		//TODO: hardcoded height? FIXIT!
+		m_rect.h = 15;
 
 		//don't save title-bars!
 		m_allowSave = false;
@@ -30,23 +32,8 @@ namespace gui
 		m_titleVisibleText.SetSize(14);
 		m_titleVisibleText.SetText(m_titleText);
 		
-		//check for size errors
-
-
-		if(parent) {
-			m_mediator.Connect(parent,"default",events::OnResize,false);
-			m_mediator.Connect(parent,"default",events::OnMove,false);
-		} else {
-			error_log("CRASH ALERT: TitleBar initialized without parent!");
-		}
-		if(s_gui->GetTheme()) {
-			m_rect = parent->GetRect();
-			m_rect.h = 15; //TODO: this is a hardcoded value!
-
-		} else {
-			m_rect = parent->GetRect();
-			m_rect.h = 15; //TODO: this is a hardcoded value!
-		}
+		//save the button style
+		m_buttonStyle = buttonStyle;
 
 		//create buttons.. image buttons
  		if(buttonStyle & CLOSE) {
@@ -55,9 +42,39 @@ namespace gui
 			button->AllowSave(false);
 			button->SetName("close");
 			button->SetText("X");
-			button->Resize(30,20);
+			button->Resize(15,15);
 			this->AddWidget(button);
  		}
+		//create buttons.. image buttons
+		if(buttonStyle & CLOSE) {
+			Button* button = NULL;
+			button = new Button;
+			button->AllowSave(false);
+			button->SetName("min");
+			button->SetText("_");
+			button->Resize(15,15);
+			this->AddWidget(button);
+		}
+		//create buttons.. image buttons
+		if(buttonStyle & CLOSE) {
+			Button* button = NULL;
+			button = new Button;
+			button->AllowSave(false);
+			button->SetName("max");
+			button->SetText("[]");
+			button->Resize(15,15);
+			this->AddWidget(button);
+		}
+		//create buttons.. image buttons
+		if(buttonStyle & QUESTION) {
+			Button* button = NULL;
+			button = new Button;
+			button->AllowSave(false);
+			button->SetName("help");
+			button->SetText("?");
+			button->Resize(15,15);
+			this->AddWidget(button);
+		}
 
 		InitGraphics();
 	}
@@ -98,49 +115,82 @@ namespace gui
 	void TitleBar::Draw() const
 	{
 		Widget::Draw();
-		if(s_gui->GetWindow()) s_gui->GetWindow()->Draw(m_titleVisibleText);
+		if(s_gui && s_gui->GetWindow()) 
+			s_gui->GetWindow()->Draw(m_titleVisibleText);
 	}
 
 	void TitleBar::InitGraphics()
 	{
-		if(s_gui->GetTheme()) {
-			sf::Color upper = s_gui->GetTheme()->GetColor("titlebar-color1");
-			sf::Color lower = s_gui->GetTheme()->GetColor("titlebar-color2");
+		if(!s_gui || !s_gui->GetTheme()) return;
 
-			m_shape = TwoColoredRectangle(m_rect.w,m_rect.h,upper,lower);
-			m_shape.SetPosition(GetPos());
+		sf::Color upper = s_gui->GetTheme()->GetColor("titlebar-color1");
+		sf::Color lower = s_gui->GetTheme()->GetColor("titlebar-color2");
 
-			//maybe initiate the title string with something
-			m_titleVisibleText.SetText("Testing Titlebar!");
-		}
+		m_shape = TwoColoredRectangle(m_rect.w,m_rect.h,upper,lower);
+		m_shape.SetPosition(GetPos());
+		//TODO: this is hardcoded value!
+		m_titleVisibleText.SetColor(sf::Color(194,133,241));
 	}
 
 	void TitleBar::Resize( int w, int h )
 	{
 		Widget::Resize(w,m_rect.h);	//don't resize the height!
-
-		//TODO: this is hardcoded value.. FIXIT! 
-		Widget* button = this->FindChildByName("close");
-		if(button) {
-			button->SetPos(m_rect.x+m_rect.w-button->GetRect().w,m_rect.y,true);
-		}
+		
+		SetPos(m_rect.x,m_rect.y,true);	//tricky hack to move the buttons where they should be
 	}
 
 	void TitleBar::SetPos( int x, int y, bool forceMove /* = false */ )
 	{
 		Widget::SetPos(x,y,forceMove);	
+		m_titleVisibleText.SetPosition((float)m_rect.x, (float)m_rect.y);
 
 		//TODO: this is hardcoded value.. FIXIT! 
-		Widget* button = this->FindChildByName("close");
-		if(button) {
-			button->SetPos(m_rect.x+m_rect.w-button->GetRect().w,m_rect.y,forceMove);
-		}		
+		if(m_buttonStyle & CLOSE) {
+			Widget* button = NULL;
+			button = this->FindChildByName("close");
+			button->SetPos(m_rect.x+m_rect.w-button->GetRect().w,m_rect.y,true);
+		}
+		if(m_buttonStyle & MAXIMIZE) {
+			Widget* button = NULL;
+			sf::Vector2f tempPos;
+			button = this->FindChildByName("close");
+			if(button) {
+				tempPos = button->GetRect().GetPos();
+			}
+			button = this->FindChildByName("max");
+			button->SetPos((int)tempPos.x - button->GetRect().w, (int)m_rect.y,true);
+		}
+		if(m_buttonStyle & MINIMIZE) {
+			Widget* button = NULL;
+			sf::Vector2f tempPos;
+			button = this->FindChildByName("max");
+			if(button) {
+				tempPos = button->GetRect().GetPos();
+			} 
+			button = this->FindChildByName("min");
+			button->SetPos((int)tempPos.x - button->GetRect().w, (int)m_rect.y,true);
+		} 
+		if(m_buttonStyle & QUESTION) {
+			Widget* button = NULL;
+			sf::Vector2f tempPos;
+			button = this->FindChildByName("min");
+			if(button) {
+				tempPos = button->GetRect().GetPos();
+			} 
+			button = this->FindChildByName("help");
+			button->SetPos((int)tempPos.x - button->GetRect().w, (int)m_rect.y,true);
+		}	
 	}
 
 	void TitleBar::SetParent( Widget* parent )
 	{
 		if(!parent) return;
+		m_parent = parent;
+		m_mediator.ClearConnections();
 
-		Resize(parent->GetRect().w,parent->GetRect().h);
+		m_mediator.Connect(parent,"default",events::OnResize,false);
+		m_mediator.Connect(parent,"default",events::OnMove,false);
+
+		Resize(parent->GetRect().w,15);	//hardcoded value
 	}
 }

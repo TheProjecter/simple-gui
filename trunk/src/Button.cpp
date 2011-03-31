@@ -69,8 +69,6 @@ namespace gui
 	{
 		Widget::SetPos(x,y,forceMove);
 		std::stringstream s;
-		s << "pos: " << m_rect.x << "|" << m_rect.y;
-		m_text.SetText(s.str());
 
 		m_text.SetPosition(m_rect.x+m_rect.w/2-m_text.GetRect().GetWidth()/2,
 			m_rect.y+m_rect.h/2-m_text.GetRect().GetHeight()/2);

@@ -1,0 +1,77 @@
+#include "../include/gui/Window.hpp"
+#include "../include/gui/GuiManager.hpp"
+
+namespace gui
+{
+	Window::Window( const std::string title, TitleBar::ButtonStyle buttons 
+			/*= TitleBar::MIN_MAX_CLOSE*/ ): m_maximized(false),
+			m_minimized(false)
+	{
+		TitleBar* titlebar = new TitleBar(title, buttons);
+		if(titlebar) {
+			AddWidget(titlebar);
+			m_mediator.Connect(titlebar,"default",gui::events::OnDrag);
+
+			if(buttons & TitleBar::CLOSE)
+				m_mediator.Connect(titlebar,"close","default",sf::Event::MouseButtonPressed);
+			if(buttons & TitleBar::MINIMIZE)
+				m_mediator.Connect(titlebar,"min",  "default",sf::Event::MouseButtonPressed);
+			if(buttons & TitleBar::MAXIMIZE)
+				m_mediator.Connect(titlebar,"max",  "default",sf::Event::MouseButtonPressed);
+			if(buttons & TitleBar::QUESTION)
+				m_mediator.Connect(titlebar,"help", "default",sf::Event::MouseButtonPressed);
+		} else {
+			error_log("Unable to create a titlebar for some reason!");
+		}
+	}
+
+	void Window::Update( float diff )
+	{
+		Widget::Update(diff);
+
+		while(Event* e = m_mediator.GetEvent()) {
+			if(e->GetType() == sf::Event::MouseButtonPressed) {
+				WidgetEvent* w = (WidgetEvent*)e;
+				if(w->GetWidget()->GetName() == "close") {
+					//commit suicide
+					Kill();
+					debug_log("Closing window \"%s\"",m_name.c_str());
+				} else if(w->GetWidget()->GetName() == "min") {
+					//TODO: hardcoded value!!
+					if(m_minimized) {
+						Resize(m_rect.w, m_oldSizeMin.h);
+						m_minimized = false;
+					} else {
+						m_oldSizeMin = m_rect;
+						m_minimized = true;
+						Resize(m_rect.w,15);	
+					}
+					debug_log("Minimizing window \"%s\"",m_name.c_str());
+				} else if(w->GetWidget()->GetName() == "max") {
+					if(!m_maximized) {
+						m_oldSizeMax = m_rect;
+						SetPos(0,0,true);
+						Resize(s_gui->GetWindow()->GetWidth(),s_gui->GetWindow()->GetHeight());
+						m_maximized = true;
+					} else { //restored
+						m_rect = m_oldSizeMax;
+						SetPos(m_rect.x,m_rect.y,true);
+						Resize(m_rect.w,m_rect.h);
+						m_maximized = false;
+					}
+					debug_log("Maximizing window \"%s\"", m_name.c_str());
+				} else if(w->GetWidget()->GetName() == "help") {
+					debug_log("Requiring help from window \"%s\"",m_name.c_str());
+				}
+			} else if(e->GetType() == gui::events::OnDrag) {
+				Drag* drag = ((OnDrag*)e)->GetDrag();
+				SetPos(drag->GetCurrentPos());
+			}
+		}
+	}
+
+	void Window::SetPosFromDrag( Drag* drag )
+	{
+		//don't move from dragging.. only move when the titlebar was moved!
+	}
+}

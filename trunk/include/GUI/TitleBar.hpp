@@ -16,7 +16,7 @@ namespace gui
 			ALL = 0xFF
 		};
 
-		TitleBar(Widget* parent, const std::string& = "TitleBar", ButtonStyle buttonStyle = MIN_MAX_CLOSE);
+		TitleBar(const std::string& = "TitleBar", ButtonStyle buttonStyle = MIN_MAX_CLOSE);
 
 		void Resize(int w, int h);
 		void SetPos(int x, int y, bool forceMove /* = false */);
@@ -28,6 +28,7 @@ namespace gui
 		void InitGraphics();
 
 	private:
+		ButtonStyle m_buttonStyle;
 		std::string m_titleText;
 		sf::String m_titleVisibleText;
 	};

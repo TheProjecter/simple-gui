@@ -115,6 +115,16 @@ namespace gui
 	public:
 		OnMove(Widget* widget = NULL);
 	};
+
+	class Drag;
+	class OnDrag : public WidgetEvent
+	{
+	public:
+		OnDrag(Widget* widget, Drag* drag);
+		Drag* GetDrag() const;
+	private:
+		Drag* m_drag;
+	};
 	
 }
 

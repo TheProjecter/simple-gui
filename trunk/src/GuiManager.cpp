@@ -10,20 +10,23 @@ namespace gui {
 
 	GuiManager::GuiManager( sf::RenderWindow* window ):	m_window(window),
 				m_hotSpotX(0),m_hotSpotY(0), m_focus(NULL), 
-				m_drag(false),index(0),m_theme(NULL),m_hoverTarget(NULL)
+				m_drag(false),index(0),m_theme(NULL),m_hoverTarget(NULL),
+				m_curDrag(NULL)
 	{
-		debug_log("Creating manager!");
 		m_parser.SetGui(this);
 		m_factories.push_back(new DefaultFactory());
-
+		Widget::s_gui = this;
+		Mediator::s_currentGui = this;
 	}
 
 	GuiManager::GuiManager(): m_window(NULL), m_hotSpotX(0),m_hotSpotY(0),
 						m_focus(NULL), m_drag(false),index(0),m_theme(NULL),
-						m_hoverTarget(NULL)
+						m_hoverTarget(NULL), m_curDrag(NULL)
 	{
 		m_parser.SetGui(this);
 		m_factories.push_back(new DefaultFactory());
+		Widget::s_gui = this;
+		Mediator::s_currentGui = this;
 	}
 	GuiManager::~GuiManager()
 	{
@@ -39,12 +42,9 @@ namespace gui {
 	{
 		//TODO: reduce the O(n) + O(log(n)) complexity
 		if(Widget* widget = GetWidgetByName(name)) {
-			uint32 id = widget->GetId();
-			WidgetList::iterator it = m_widgets.find(id);
-			if(it != m_widgets.end()) {
-				delete widget;
-				m_widgets.erase(it);
-			} else std::cout << "Unable to delete widget !" << name.c_str() << std::endl;
+			m_freeWidgets.push_back(widget);
+		} else {
+			debug_log("Couldn't delete widget \"%s\". Not found!",name.c_str());
 		}
 	}
 
@@ -52,7 +52,7 @@ namespace gui {
 	{
 		if(!widget) return;
 
-		m_freeWidgets.push_back(widget->GetId());
+		m_freeWidgets.push_back(widget);
 	}
 
 	//widgets must be dynamically allocated!
@@ -72,6 +72,9 @@ namespace gui {
 
 	void GuiManager::SetHasFocus( WidgetList::reverse_iterator& i )
 	{
+		//the focus is the same widget..
+		if(m_focus == i->second) return;
+
 		//if there was another focus before...he lost focus
 		if(m_focus) {
 			m_focus->m_isFocus = false;
@@ -85,6 +88,7 @@ namespace gui {
 		i = m_widgets.rbegin();
 		m_focus = widget;
 		m_focus->m_isFocus = true;
+		m_focus->SetId(i->first);
 		m_focus->OnFocus();
 	}
 
@@ -101,16 +105,30 @@ namespace gui {
 		return NULL;
 	}
 
-	void GuiManager::StartDrag(int hotSpotX, int hotSpotY)
+	void GuiManager::StartDrag( Widget* widget, sf::Event* event )
 	{
-		m_hotSpotX = hotSpotX; 
-		m_hotSpotY = hotSpotY;
-		m_drag = true;
+		RegisterDrag(widget->CreateDrag(event));
 	}
 
 	void GuiManager::StopDrag(int x, int y)
 	{
-		m_drag = false;
+		if(!m_curDrag) return;
+
+		//only finish the drag if it actually started!
+		if(m_curDrag->GetStatus() == Drag::Running) {
+			m_curDrag->m_status = Drag::Finished;
+
+			Widget* parent = m_curDrag->GetTargetParent();
+			
+			//if there is no responsible parent, the gui will take the responsibility
+			if(!parent) {
+
+			} else {
+				parent->HandleDragStop(m_curDrag);
+			}
+		}
+		delete m_curDrag;
+		m_curDrag = NULL;
 	}
 
 	std::vector<Widget*> GuiManager::GetWidgetsByType(WidgetType type) const
@@ -132,14 +150,36 @@ namespace gui {
 
 		//set the static gui pointer to the current mgr, since there could be more
 		Widget::s_gui = this;
+		Mediator::s_currentGui = this;
+
+		//check if the current focus just died
+		if(m_focus && m_focus->IsDead()) 
+			m_focus = NULL;
+		if(m_hoverTarget && m_hoverTarget->IsDead())
+			m_hoverTarget = NULL;
 
 		_HandleEvents();
 
 		for(WidgetList::iterator i=m_widgets.begin(); i!= m_widgets.end(); i++) {
-			i->second->Update(diff);
-			i->second->Draw();
+			if(i->second->IsDead()){ 
+				m_freeWidgets.push_back(i->second);
+			} else {
+				i->second->Update(diff);
+				i->second->Draw();
+			}
 		}
-	
+
+		//clear the dead widgets
+		for(uint32 i=0; i<m_freeWidgets.size(); i++) {
+			WidgetList::iterator it = m_widgets.find(m_freeWidgets[i]->GetId());
+			if(it != m_widgets.end()) {
+				delete it->second;
+				m_widgets.erase(it);
+			} else {
+				debug_log("Couldn't delete top-level widget!");
+			}
+		}
+		m_freeWidgets.clear();
 	}
 
 	void GuiManager::RegisterEvent( sf::Event* event )
@@ -171,7 +211,6 @@ namespace gui {
 		return m_window->ConvertCoords(x,y);
 	}
 
-	//TODO: update this to work with tinyxml!!
 	bool GuiManager::LoadLayout( const char* filename )
 	{
 		if(!filename) return false;
@@ -182,6 +221,7 @@ namespace gui {
 			debug_log("Unable to load layout \"%s\", because: \"%s\"", filename,doc.ErrorDesc());
 			return false;
 		}
+
 		//GuiMgr Parse should be able to handle Layout loading.. it's just like a .ui only with less features!
 		m_parser.Parse(&doc,true);
 		
@@ -214,7 +254,16 @@ namespace gui {
 			return;
 		}
 		ClearWidgets();
+		//free the current theme
+		if(m_theme) {
+			delete m_theme;
+			m_theme = NULL;
+		}
+		m_events.clear();
+		m_freeWidgets.clear();
 		m_mediator.ClearConnections();
+		m_mediator.GetDispatcher().ClearListeners();
+		m_mediator.ConsumeEvents();
 		m_parser.Parse(&doc);
 	}
 
@@ -223,6 +272,7 @@ namespace gui {
 		m_factories.push_back(userFactory);
 	}
 
+	//returns the path in this form: [0]leaf-[1]child-[2]parent
 	std::stack<Widget*> GuiManager::QueryWidgetPath( const std::string& path ) const
 	{
 		std::vector<std::string> temp;
@@ -230,7 +280,7 @@ namespace gui {
 		std::vector<Widget*> helper;
 		Widget* current = NULL;
 
-		m_parser.ExtractPath(path,temp);
+		ExtractPath(path,temp);
 		
 		if(temp.size()) {
 			current = this->GetWidgetByName(temp[0]);
@@ -265,9 +315,14 @@ namespace gui {
 			Widget* widget = it->second;
 			delete widget;
 		}
+		index = 0;
 		m_widgets.clear();
 		m_focus = NULL;
 		m_hoverTarget = NULL;
+		if(m_curDrag) {
+			delete m_curDrag;
+			m_curDrag = NULL;
+		}
 	}
 
 	void GuiManager::SaveUI( const char* filename )
@@ -303,9 +358,9 @@ namespace gui {
 	void GuiManager::FreeWidgets()
 	{
 		for(uint32 i=0; i<m_freeWidgets.size(); i++) {
-			uint32 id = m_freeWidgets[i];
+			Widget* widget = m_freeWidgets[i];
 			
-			WidgetList::iterator it = m_widgets.find(id);
+			WidgetList::iterator it = m_widgets.find(widget->GetId());
 			if(it != m_widgets.end()) {
 				delete it->second;
 				m_widgets.erase(it);
@@ -322,6 +377,10 @@ namespace gui {
 			case sf::Event::MouseButtonPressed:
 				for(itr=m_widgets.rbegin(); itr!=m_widgets.rend();itr++) {
 					Widget* currentWidget = itr->second;
+					
+					//skip dead widgets
+					if(currentWidget->IsDead()) continue;
+
 					int x = curEvent->MouseButton.X;
 					int y = curEvent->MouseButton.Y;
 					sf::Vector2f c = m_window->ConvertCoords(x,y);
@@ -334,10 +393,11 @@ namespace gui {
 						int X = (int)currentWidget->GetPos().x;
 						int Y = (int)currentWidget->GetPos().y;
 
-						//don't drag the widget if the cursor collided with one of it's widgets
-						if(currentWidget->CanDrag(x,y)) {
-							StartDrag(x-X,y-Y);
-						}
+						//don't initiate drag, widgets will
+ 						if(currentWidget->CanDrag(x,y)) {
+ 							StartDrag(currentWidget,curEvent);
+ 						}
+						
 						break;
 					}
 				}
@@ -369,10 +429,9 @@ namespace gui {
 			case sf::Event::MouseMoved:
 				{				
 					sf::Vector2f a = m_window->ConvertCoords(curEvent->MouseMove.X,curEvent->MouseMove.Y);
-					if(m_drag && m_focus) {
+					
+					this->MoveDrag(curEvent);
 
-						m_focus->SetPos((int)a.x-m_hotSpotX, (int)a.y-m_hotSpotY);
-					}
 					if(m_focus) 
 						m_focus->RegisterEvent(curEvent);
 					//check for hovering events, they're in order by focus levels, 
@@ -428,6 +487,142 @@ namespace gui {
 
 	void GuiManager::RegisterDrag( Drag* drag )
 	{
+		if(m_curDrag) 
+			delete m_curDrag;
+
 		m_curDrag = drag;
+	}
+
+	void GuiManager::MoveDrag( sf::Event* event )
+	{
+		if(!m_curDrag) return;
+
+		int x = event->MouseMove.X;
+		int y = event->MouseMove.Y;
+
+		Rect rect = Rect(x,y,1,1);
+		
+
+		//update the position of the drag
+		m_curDrag->SetPos(ConvertCoords(x,y));
+
+		//if the start wasn't initiated yet, you may return
+		if(m_curDrag->GetStatus() != Drag::Running) return;
+
+		////////////////////////////////////////////////////////////////
+		//    Check the current focus target for the new position     //
+		////////////////////////////////////////////////////////////////
+		
+		UpdateDragFocus(x,y);
+
+		/////////////////////////////////////////////////////////////////
+		//     Announce the responsible parent that the drag moved     //
+		/////////////////////////////////////////////////////////////////
+		
+		//if there's no parent, the responsible will be the gui mgr
+		if(!m_curDrag->GetTargetParent()) {	
+			//hardcode the movement.. fix?
+			Widget* target = m_curDrag->GetTarget();
+			target->SetPosFromDrag(m_curDrag);
+		} else {
+			Widget* parent = m_curDrag->GetTargetParent();
+			parent->HandleDragMove(m_curDrag);
+		}
+	}
+
+	Widget* GuiManager::GetWidgetAt( const sf::Vector2f& pos ) const
+	{
+		return GetWidgetAt((int)pos.x, (int)pos.y);
+	}
+
+	Widget* GuiManager::GetWidgetAt( int x, int y ) const
+	{
+		Rect rect = Rect(x,y,1,1);
+		for(WidgetList::const_reverse_iterator it = m_widgets.rbegin(); 
+			it != m_widgets.rend(); it++) 
+		{
+			if(it->second->IsCollision(rect)) {
+				return it->second;
+			}
+		}
+		return NULL;
+	}
+
+	Widget* GuiManager::GetLastWidgetAt( int x, int y ) const
+	{
+		Widget* current = GetWidgetAt(x,y);
+		if(!current) return NULL;
+		Rect rect = Rect(x,y,1,1);
+
+		//go to the deepest level of composition possible(last widget colliding)
+		while(true) {
+			const WidgetList& list = current->GetWidgetList();
+			WidgetList::const_iterator i;
+
+			for(i = list.begin(); i != list.end(); i++) {
+				//allow hidden widgets!
+				if(IsCollision(i->second->m_rect,rect)) {
+					current = i->second;
+					break;
+				}
+			}
+
+			//if you got to the end of the list and you didn't collide with anything
+			if(i == list.end()) {
+				return current;
+			}
+		}
+	}
+
+	void GuiManager::UpdateDragFocus(int x, int y)
+	{
+		Rect rect = Rect(x,y,1,1);
+
+		//get the lowest-level widget that's colliding with the mouse
+		Widget* cur = GetLastWidgetAt(x,y);
+
+		//no widget at that position... null it!
+		if(!cur) {
+			m_curDrag->m_focusTarget = NULL;
+			return;
+		}
+		//reset the current focus
+		m_curDrag->m_focusTarget = NULL;
+		std::vector<Widget*> stack = cur->GetWidgetStackPath();
+
+		for(uint32 i=0; i<stack.size(); i++) {
+			cur = stack[i];
+			//if it is a collision and it accepts the drop 
+			if(cur->IsCollision(rect) && cur->AcceptsDrop(m_curDrag)) {
+				m_curDrag->m_focusTarget = cur;
+				break;
+			}
+		}
+
+	}
+
+	Widget* GuiManager::QueryWidget( const std::string& path ) const
+	{
+		std::vector<std::string> temp;
+		Widget* current = NULL;
+
+		ExtractPath(path,temp);
+
+		if(temp.size()) {
+			current = this->GetWidgetByName(temp[0]);
+			if(!current) {
+				error_log("Unable to complete query \"%s\". Widget \"%s\" not found!", path.c_str(),temp[0]);
+				return NULL;
+			}
+		} else return NULL;
+
+		for(uint32 i=1; i<temp.size(); i++) {
+			current = current->FindChildByName(temp[i]);
+			if(!current) {
+				error_log("Unable to complete query \"%s\". Widget \"%s\" not found!", path.c_str(),temp[i]);
+				return NULL;
+			}
+		}
+		return current;
 	}
 }

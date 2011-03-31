@@ -39,6 +39,8 @@ namespace gui {
 
 		std::vector<Widget*> GetWidgetsByType(WidgetType type) const;
 		Widget* GetWidgetByName(const std::string& name) const;
+		Widget* GetWidgetAt(const sf::Vector2f& pos) const;
+		Widget* GetWidgetAt(int x, int y) const;
 
 		void SaveLayout(const char* filename);
 		bool LoadLayout(const char* filename);
@@ -51,15 +53,12 @@ namespace gui {
 
 		//if the query fails, the stack will be empty!
 		std::stack<Widget*> QueryWidgetPath(const std::string& path) const;
+		Widget* QueryWidget(const std::string& path) const;
 		sf::Vector2f ConvertCoords(int x, int y);
 	private:
-		void ClearWidgets();
-		void FreeWidgets();
-		void _HandleEvents();
-
 		friend class GuiMgrParser;
 		typedef std::map<uint32, Widget*> WidgetList;
-		std::vector<uint32> m_freeWidgets;	//holds the guids of widgets that will be freed
+		std::vector<Widget*> m_freeWidgets;	//holds the guids of widgets that will be freed
 		Theme* m_theme;						//the current theme used by widgets
 		WidgetList m_widgets;				//holds the parent widgets
 		uint32 index;						//used to keep track of focusing levels
@@ -75,8 +74,15 @@ namespace gui {
 		Drag* m_curDrag;
 
 		void SetHasFocus(WidgetList::reverse_iterator& i);
-		void StartDrag(int hotSpotx, int hotSpoty);
-		void StopDrag(int x, int y);
+		void StartDrag(Widget* widget, sf::Event* event);	//deprecated?
+		void MoveDrag(sf::Event* event);
+		void StopDrag(int x, int y);				
+
+		Widget* GetLastWidgetAt(int x, int y) const;
+		void UpdateDragFocus(int x, int y);
+		void ClearWidgets();
+		void FreeWidgets();
+		void _HandleEvents();
 
 
 	};

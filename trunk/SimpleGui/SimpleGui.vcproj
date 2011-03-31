@@ -286,6 +286,18 @@
 						</File>
 					</Filter>
 				</Filter>
+				<Filter
+					Name="UiEditor"
+					>
+					<File
+						RelativePath="..\src\UiEditor.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\include\GUI\UiEditor.hpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Debug"
