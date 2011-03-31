@@ -18,7 +18,7 @@ namespace gui
 		bool m_maximized;
 		bool m_minimized;
 		virtual void SetPosFromDrag(Drag* drag);
-		
+		virtual void HandleDragStop(Drag* drag);
 	private:
 	};
 }

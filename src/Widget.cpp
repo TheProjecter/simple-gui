@@ -1132,7 +1132,7 @@ namespace gui {
 			m_dropFlags = drag->GetDragFlags();
 			SetPos(drag->GetCurrentPos(), drag->GetForcedMove());
 			
-			//create the drag event
+			//create the drag event.. you shouldn't really create a new drag event every time you move the mouse :|
 			m_mediator.PostEvent(new gui::OnDrag(this,drag));
 
 		m_dropFlags = temp;

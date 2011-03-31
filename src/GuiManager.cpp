@@ -115,18 +115,20 @@ namespace gui {
 		if(!m_curDrag) return;
 
 		//only finish the drag if it actually started!
-		if(m_curDrag->GetStatus() == Drag::Running) {
-			m_curDrag->m_status = Drag::Finished;
-
-			Widget* parent = m_curDrag->GetTargetParent();
-			
-			//if there is no responsible parent, the gui will take the responsibility
-			if(!parent) {
-
-			} else {
-				parent->HandleDragStop(m_curDrag);
-			}
+		if(!m_curDrag->StopDrag()) {
+			delete m_curDrag;
+			m_curDrag = NULL;
+			return;
 		}
+		Widget* parent = m_curDrag->GetTargetParent();
+		
+		//if there is no responsible parent, the gui will take the responsibility
+		if(!parent) {
+
+		} else {
+			parent->HandleDragStop(m_curDrag);
+		}
+
 		delete m_curDrag;
 		m_curDrag = NULL;
 	}
@@ -157,6 +159,10 @@ namespace gui {
 			m_focus = NULL;
 		if(m_hoverTarget && m_hoverTarget->IsDead())
 			m_hoverTarget = NULL;
+		if(m_curDrag && m_curDrag->GetTarget()->IsDead()) {
+			delete m_curDrag;
+			m_curDrag = NULL;
+		}
 
 		_HandleEvents();
 
@@ -548,18 +554,22 @@ namespace gui {
 		return NULL;
 	}
 
-	Widget* GuiManager::GetLastWidgetAt( int x, int y ) const
+	Widget* GuiManager::GetLastWidgetAt( int x, int y, Widget* skip /*=NULL*/ ) const
 	{
 		Widget* current = GetWidgetAt(x,y);
 		if(!current) return NULL;
+		if(current == skip) NULL;
+
 		Rect rect = Rect(x,y,1,1);
 
 		//go to the deepest level of composition possible(last widget colliding)
 		while(true) {
 			const WidgetList& list = current->GetWidgetList();
-			WidgetList::const_iterator i;
+			WidgetList::const_reverse_iterator i;
 
-			for(i = list.begin(); i != list.end(); i++) {
+			for(i = list.rbegin(); i != list.rend(); i++) {
+				if(i->second == skip) continue;
+
 				//allow hidden widgets!
 				if(IsCollision(i->second->m_rect,rect)) {
 					current = i->second;
@@ -568,7 +578,7 @@ namespace gui {
 			}
 
 			//if you got to the end of the list and you didn't collide with anything
-			if(i == list.end()) {
+			if(i == list.rend()) {
 				return current;
 			}
 		}
@@ -579,7 +589,7 @@ namespace gui {
 		Rect rect = Rect(x,y,1,1);
 
 		//get the lowest-level widget that's colliding with the mouse
-		Widget* cur = GetLastWidgetAt(x,y);
+		Widget* cur = GetLastWidgetAt(x,y,m_curDrag->GetTarget());	//ignore the target when searching
 
 		//no widget at that position... null it!
 		if(!cur) {

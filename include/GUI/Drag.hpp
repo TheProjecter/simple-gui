@@ -51,7 +51,7 @@ namespace gui
 		uint32 GetStatus() const;
 		uint32 GetType() const;
 
-		void StopDrag();
+		bool StopDrag();
 		bool IsRunning() const;
 		bool IsFinished() const;
 
