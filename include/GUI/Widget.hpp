@@ -22,8 +22,16 @@ namespace gui {
 		Widget(const std::string& name);
 		virtual ~Widget();
 
-		virtual bool AddWidget(Widget* child);
-		virtual void DeleteWidget(const std::string& widgetName);
+		//returns false if there's already a widget with the same name!
+		bool AddWidget(Widget* child);
+		//renames the widget by _xx to force the add to happen, where xx 
+		//is the number of renames it took. ex: my_button_1
+		void AddWidgetForced(Widget* child);
+		//Free the child widget
+		void DeleteWidget(const std::string& widgetName);
+		//Removes the child widget from management, doesn't free it
+		//return false if the widget isn't a child of the current widget
+		bool RemoveWidget(Widget* widget);
 
 		uint32 GetType() const;
 		void SetType(uint32 type);
@@ -74,10 +82,14 @@ namespace gui {
 
 		/* Attributes Modifiers */
 		void SetMovable(bool flag);
+		bool IsMovable() const;
+
 		void Show();
 		void Hide();
+
 		bool Clicked() const;
 		void SetClicked(bool flag);
+
 		void ShowBackground();
 		void HideBackground();
 

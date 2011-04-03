@@ -2,6 +2,7 @@
 #include "../include/gui/Event.hpp"
 #include "../include/gui/GuiManager.hpp"
 #include <iostream>
+#include <sstream>
 #include <stack>
 #include <tinyxml.h>
 
@@ -173,8 +174,10 @@ namespace gui {
 		m_rect.x = x; 
 		m_rect.y = y;
 
-		//error checking to keep widgets in place
-		if(m_parent && m_dropFlags == Drag::WidgetOnly) {
+		//error checking to keep widgets in place, to allow outside 
+		//of parents rect, modify the drag flags to anywhere?
+		if(m_parent && m_dropFlags == Drag::WidgetOnly ) 
+		{
 			const Rect& prect = m_parent->GetRect();
 			const WidgetList& widgets = m_parent->GetWidgetList();
 
@@ -260,6 +263,22 @@ namespace gui {
 				m_freeWidgets.push_back(child);
 			}
 		}
+	}
+
+	//might remove another widget if passed a widget from another parent
+	//which happens to have a id that matches one from the current widget
+	bool Widget::RemoveWidget( Widget* widget )
+	{
+		if(!widget) return false;
+
+		WidgetList::iterator it = m_widgets.find(widget->GetId());
+		if(it == m_widgets.end()) {
+			debug_log("Widget \"%s\" doesn't have a child called \"%s\"", 
+						m_name.c_str(),widget->GetName().c_str());		
+			return false;
+		}
+		m_widgets.erase(it);
+		return true;
 	}
 
 	Widget* Widget::FindChildByName( const std::string& name ) const
@@ -1051,9 +1070,7 @@ namespace gui {
 		if(drag->GetType() != Drag::Widget) return;
 
 		//the default receive drop policy is to add the widget to this
-		if(!AddWidget(drag->GetTarget())) {
-			error_log("Unable to complete the drop!");
-		}
+		AddWidgetForced(drag->GetTarget());
 	}
 
 	void Widget::HandleDragDraw( Drag* drag )
@@ -1074,23 +1091,24 @@ namespace gui {
 		if(drag->GetDropStatus() == Drag::Failed) {
 			target->SetPos(drag->GetStartPos(),true); //forced move
 		} else if(drag->GetDropStatus() == Drag::Succesful) {
-			//update position
-			target->SetPos(drag->GetCurrentPos(),drag->GetForcedMove());
-
 			//if it's been moved outside the widget
 			if(drag->GetCurrentFocus() != this) {
 				//if it's been moved on the gui
 				if(!drag->GetCurrentFocus()) {
-					s_gui->AddWidget(target);
-					this->DeleteWidget(target->GetName());
+					//order matters, because when you add the widget the m_id changes!
+					RemoveWidget(target);	  //remove it first
+					s_gui->AddWidget(target); //then add it to someone else
 				} else {
 					//it's inside another widget.. 
 					Widget* parent = drag->GetCurrentFocus();
 					//parent->AddWidget(target);
+					RemoveWidget(target);
 					parent->HandleDragDrop(drag);
-					this->DeleteWidget(target->GetName());
 				}
 			}
+
+			//update position
+			target->SetPos(drag->GetCurrentPos(),drag->GetForcedMove());
 		}
 	}
 
@@ -1164,5 +1182,26 @@ namespace gui {
 	void Widget::Kill()
 	{
 		m_dead = true;
+	}
+
+	bool Widget::IsMovable() const
+	{
+		return m_movable;
+	}
+
+	void Widget::AddWidgetForced( Widget* child )
+	{
+		uint32 attempts = 1;
+		std::string name = child->GetName();
+		while(true) {
+			if(!AddWidget(child)) {
+				std::stringstream s;
+				s << name;
+
+				s << "_" << attempts;
+				child->SetName(s.str());
+				attempts++;
+			} else return;
+		}
 	}
 }

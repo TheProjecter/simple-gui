@@ -36,7 +36,7 @@ namespace gui
 	}
 
 	Drag::Drag( gui::Widget* target, sf::Event* event):
-		  m_target(target), m_forceMove(false), m_type(Drag::Widget),
+		  m_target(target), m_forceMove(true/*debug*/), m_type(Drag::Widget),
 		  m_minDragDist(5), m_status(NotStarted), m_focusTarget(NULL),
 		  m_dropStatus(NotStarted)
 	{
@@ -112,6 +112,13 @@ namespace gui
 		if(m_status == Running)
 			m_status = Finished;
 		else return false;
+
+		//if the widget isn't movable and you don't force it to move.. 
+		//then the drag failed!
+		if(!m_target->IsMovable() && !m_forceMove) {
+			m_dropStatus = Failed;
+			return false;	//this will delete the drag event
+		}
 
 		if(!m_focusTarget) {
 			//if the current target can't be dropped directly to the gui, the drop failed!
