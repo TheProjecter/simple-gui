@@ -586,7 +586,7 @@ namespace gui {
 								if(itr->second->IsDead() || itr->second->IsHidden()) 
 									continue;
 								//you don't get events if hidden behind the parent's clip rect
-								if(!itr->second->IsCollision(NormalizeClipArea())) 
+								if(!itr->second->IsCollision(NormalizeClipAreaView())) 
 									continue;
 
 								int x = m_events[i]->MouseButton.X;
@@ -1246,10 +1246,38 @@ namespace gui {
 		ResizeClipArea(s_gui->GetOldWidth(),s_gui->GetOldHeight());
 	}
 
+	//returns the visible rect --view based!)
+	gui::Rect Widget::NormalizeClipAreaView() const
+	{
+		if(!s_gui || !m_clipRect) return Rect();
+
+		Rect temp = m_clipRect;
+
+		double height = s_gui->GetWindow().GetView().GetHalfSize().y*2;
+		double width = s_gui->GetWindow().GetView().GetHalfSize().x*2;
+
+		double yprc = height/s_gui->GetWindow().GetHeight();
+		double xprc = width/s_gui->GetWindow().GetWidth();
+
+		temp.y = uint32(m_rect.y);	//slight hack?
+		temp.x = uint32(m_clipRect.x * xprc);
+		temp.w = uint32(m_clipRect.w * xprc);
+		temp.h = uint32(m_clipRect.h * yprc);
+
+		return temp;
+	}
+
+	//returns the visible rect as seen on screen(coords are screen..not view based!)
 	gui::Rect Widget::NormalizeClipArea() const
 	{
+		if(!s_gui || !m_clipRect) return Rect();
+
 		Rect temp = m_clipRect;
-		temp.y = m_rect.y;
+
+		double height = s_gui->GetWindow().GetView().GetHalfSize().y*2;
+		double yprc = s_gui->GetWindow().GetHeight()/height;
+		temp.y = uint32(m_rect.y * yprc);
+
 		return temp;
 	} 
 
@@ -1267,11 +1295,12 @@ namespace gui {
 
 		m_clipRect = m_rect;
 
-		m_clipRect.x *= xprc;
-		m_clipRect.y *= yprc;
-		m_clipRect.w *= wprc;
-		m_clipRect.h *= hprc;
+		m_clipRect.x = uint32(m_clipRect.x * xprc);
+		m_clipRect.y = uint32(m_clipRect.y * yprc);
+		m_clipRect.w = uint32(m_clipRect.w * wprc);
+		m_clipRect.h = uint32(m_clipRect.h * hprc);
 		
-		m_clipRect.y = newHeight - (int)m_clipRect.y - m_clipRect.h;
+		m_clipRect.y = newHeight - m_clipRect.y - m_clipRect.h;
 	}
+
 }
