@@ -386,7 +386,7 @@ namespace gui {
 					y = (int)c.y;
 
 					//skip widgets if the click happened outside the visible rect
-					if(!IsCollision(currentWidget->NormalizeClipArea(),Rect(x,y,1,1))) 
+					if(!IsCollision(currentWidget->NormalizeClipAreaView(),Rect(x,y,1,1))) 
 						continue;
 
 					if(currentWidget->IsCollision(Rect(x,y,1,1)) && currentWidget->m_visible) 
@@ -515,12 +515,15 @@ namespace gui {
 
 		int x = event->MouseMove.X;
 		int y = event->MouseMove.Y;
+		sf::Vector2f pos = ConvertCoords(x,y);
+		x = (int)pos.x;
+		y = (int)pos.y;
 
 		Rect rect = Rect(x,y,1,1);
 		
 
 		//update the position of the drag
-		m_curDrag->SetPos(ConvertCoords(x,y));
+		m_curDrag->SetPos(pos);
 
 		//if the start wasn't initiated yet, you may return
 		if(m_curDrag->GetStatus() != Drag::Running) return;

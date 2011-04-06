@@ -193,6 +193,7 @@ namespace gui {
 		void StopClipping() const;
 		void ResizeClipArea(uint32 newWidth, uint32 newHeight);
 		virtual Rect NormalizeClipArea() const;
+		virtual Rect NormalizeClipAreaView() const;
 
 		virtual Drag* CreateDrag(sf::Event* event);
 
