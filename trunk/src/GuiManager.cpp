@@ -8,10 +8,11 @@
 
 namespace gui {
 
-	GuiManager::GuiManager( sf::RenderWindow* window ):	m_window(window),
+	GuiManager::GuiManager( sf::RenderWindow& window ):	m_window(window),
 				m_hotSpotX(0),m_hotSpotY(0), m_focus(NULL), 
 				m_drag(false),index(0),m_theme(NULL),m_hoverTarget(NULL),
-				m_curDrag(NULL)
+				m_curDrag(NULL),m_oldWidth(window.GetWidth()),
+				m_oldHeight(window.GetHeight())
 	{
 		m_parser.SetGui(this);
 		m_factories.push_back(new DefaultFactory());
@@ -19,15 +20,15 @@ namespace gui {
 		Mediator::s_currentGui = this;
 	}
 
-	GuiManager::GuiManager(): m_window(NULL), m_hotSpotX(0),m_hotSpotY(0),
-						m_focus(NULL), m_drag(false),index(0),m_theme(NULL),
-						m_hoverTarget(NULL), m_curDrag(NULL)
-	{
-		m_parser.SetGui(this);
-		m_factories.push_back(new DefaultFactory());
-		Widget::s_gui = this;
-		Mediator::s_currentGui = this;
-	}
+// 	GuiManager::GuiManager(): m_window(NULL), m_hotSpotX(0),m_hotSpotY(0),
+// 						m_focus(NULL), m_drag(false),index(0),m_theme(NULL),
+// 						m_hoverTarget(NULL), m_curDrag(NULL)
+// 	{
+// 		m_parser.SetGui(this);
+// 		m_factories.push_back(new DefaultFactory());
+// 		Widget::s_gui = this;
+// 		Mediator::s_currentGui = this;
+// 	}
 	GuiManager::~GuiManager()
 	{
 		ClearWidgets();
@@ -145,11 +146,6 @@ namespace gui {
 
 	void GuiManager::Update(float diff)
 	{
-		if(!m_window) {
-			debug_log("GuiManager doesn't not have a render window!");
-			return;
-		}
-
 		//set the static gui pointer to the current mgr, since there could be more
 		Widget::s_gui = this;
 		Mediator::s_currentGui = this;
@@ -193,11 +189,6 @@ namespace gui {
 		m_events.push_back(event);
 	}
 
-	void GuiManager::SetWindow( sf::RenderWindow* window )
-	{
-		m_window = window;
-	}
-
 	void GuiManager::SetTheme( Theme* theme )
 	{
 		m_theme = theme;
@@ -214,7 +205,7 @@ namespace gui {
 
 	sf::Vector2f GuiManager::ConvertCoords( int x, int y )
 	{
-		return m_window->ConvertCoords(x,y);
+		return m_window.ConvertCoords(x,y);
 	}
 
 	bool GuiManager::LoadLayout( const char* filename )
@@ -384,14 +375,20 @@ namespace gui {
 				for(itr=m_widgets.rbegin(); itr!=m_widgets.rend();itr++) {
 					Widget* currentWidget = itr->second;
 					
-					//skip dead widgets
-					if(currentWidget->IsDead()) continue;
+					//skip dead widgets and invisible widgets
+					if(currentWidget->IsDead() || currentWidget->IsHidden()) 
+						continue;
 
 					int x = curEvent->MouseButton.X;
 					int y = curEvent->MouseButton.Y;
-					sf::Vector2f c = m_window->ConvertCoords(x,y);
+					sf::Vector2f c = m_window.ConvertCoords(x,y);
 					x = (int)c.x;
 					y = (int)c.y;
+
+					//skip widgets if the click happened outside the visible rect
+					if(!IsCollision(currentWidget->NormalizeClipArea(),Rect(x,y,1,1))) 
+						continue;
+
 					if(currentWidget->IsCollision(Rect(x,y,1,1)) && currentWidget->m_visible) 
 					{
 						currentWidget->RegisterEvent(curEvent);
@@ -418,7 +415,7 @@ namespace gui {
 				break;
 			case sf::Event::MouseButtonReleased:
 				{
-					sf::Vector2f a = m_window->ConvertCoords(curEvent->MouseButton.X,curEvent->MouseButton.Y);
+					sf::Vector2f a = m_window.ConvertCoords(curEvent->MouseButton.X,curEvent->MouseButton.Y);
 					StopDrag((int)a.x,(int)a.y);
 					if(m_focus) {
 						//focus will received the MouseReleased event even if it's not currently colliding!
@@ -434,7 +431,7 @@ namespace gui {
 				}
 			case sf::Event::MouseMoved:
 				{				
-					sf::Vector2f a = m_window->ConvertCoords(curEvent->MouseMove.X,curEvent->MouseMove.Y);
+					sf::Vector2f a = m_window.ConvertCoords(curEvent->MouseMove.X,curEvent->MouseMove.Y);
 					
 					this->MoveDrag(curEvent);
 
@@ -477,6 +474,19 @@ namespace gui {
 			case sf::Event::KeyReleased:
 				if(m_focus) m_focus->RegisterEvent(curEvent);
 				break;
+			case sf::Event::Resized:
+			{
+
+				for(WidgetList::iterator it = m_widgets.begin(); 
+					it != m_widgets.end(); it++) 
+				{
+					it->second->ResizeClipArea(curEvent->Size.Width,curEvent->Size.Height);
+					//it->second->UpdateClipArea();
+				}
+				m_oldWidth = curEvent->Size.Width;
+				m_oldHeight = curEvent->Size.Height;
+				
+			} break;
 			default: if(m_focus) m_focus->RegisterEvent(curEvent);
 			}
 		}
@@ -486,7 +496,7 @@ namespace gui {
 
 	}
 
-	sf::RenderWindow* GuiManager::GetWindow() const
+	sf::RenderWindow& GuiManager::GetWindow() const
 	{
 		return m_window;
 	}
@@ -634,5 +644,15 @@ namespace gui {
 			}
 		}
 		return current;
+	}
+
+	gui::uint32 GuiManager::GetOldWidth() const
+	{
+		return m_oldWidth;
+	}
+
+	gui::uint32 GuiManager::GetOldHeight() const
+	{
+		return m_oldHeight;
 	}
 }

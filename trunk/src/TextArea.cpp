@@ -20,7 +20,6 @@ void gui::TextArea::SetText( const std::string& text )
 void gui::TextArea::Draw() const
 {
 	Widget::Draw();
-	if(!s_gui->GetWindow()) return ;
 
 	for(uint32 i=m_startingLine; i<m_lines.size(); i++) {
 		const Line& line = m_lines[i];
@@ -28,7 +27,7 @@ void gui::TextArea::Draw() const
 			const Word& word = line.m_words[j];
 			for(uint32 k=0; k<word.m_char.size(); k++) {
 				const sf::String& string = word.m_char[k];
-				s_gui->GetWindow()->Draw(string);
+				s_gui->GetWindow().Draw(string);
 			}
 		}
 	}

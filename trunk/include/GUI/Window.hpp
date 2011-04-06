@@ -10,15 +10,17 @@ namespace gui
 	public:
 		Window(const std::string title, TitleBar::ButtonStyle buttons = TitleBar::MIN_MAX_CLOSE);
 
-		virtual void Update(float diff);
+		virtual void Draw() const;
 
 	protected:
+		virtual void Update(float diff);
+
 		Rect m_oldSizeMax;			//used to restore to previous max size
-		Rect m_oldSizeMin;			//used to restored to previous min size
 		bool m_maximized;
 		bool m_minimized;
 		virtual void SetPosFromDrag(Drag* drag);
 		virtual void HandleDragStop(Drag* drag);
+		virtual void UpdateClipArea();
 	private:
 	};
 }

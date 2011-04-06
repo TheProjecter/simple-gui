@@ -84,6 +84,8 @@ namespace gui {
 		void SetMovable(bool flag);
 		bool IsMovable() const;
 
+		bool IsVisible() const;
+		bool IsHidden() const;
 		void Show();
 		void Hide();
 
@@ -109,6 +111,7 @@ namespace gui {
 		bool IsDead() const;
 		void Kill();
 
+		virtual void Draw() const;
 	protected:
 		/* Attributes */
 		uint32 m_type;						//the type of the widget		
@@ -127,6 +130,7 @@ namespace gui {
 		bool m_clicked;						//was the widget clicked ?
 		bool m_released;					//was the click released ?
 		Rect m_rect;						//the position/size of the widget
+		Rect m_clipRect;					//the visible portion of the widget
 		bool m_visible;						//widget visibility
 		bool m_mainVisible;					//background image visibility
 		bool m_movable;						//is the widget movable ?
@@ -144,7 +148,6 @@ namespace gui {
 		
 		/* Static member data */
 		static GuiManager* s_gui;			//pointer to the current gui
-
 		static void ConvertCoords(sf::Vector2f& coords);
 
 		/* Widget specific events */
@@ -179,12 +182,17 @@ namespace gui {
 
 		void _HandleEvents();
 		virtual void Update(float diff);
-		virtual void Draw() const;
 		void Draw(const sf::Image* image);
 		void SetFocus(Widget* widget);
 		virtual void ReloadTheme();
 		virtual void InitGraphics();
+		virtual void UpdateClipArea();
 
+		//handle clipping
+		void StartClipping() const;
+		void StopClipping() const;
+		void ResizeClipArea(uint32 newWidth, uint32 newHeight);
+		virtual Rect NormalizeClipArea() const;
 
 		virtual Drag* CreateDrag(sf::Event* event);
 
@@ -195,8 +203,8 @@ namespace gui {
 		virtual void SetPosFromDrag(Drag* drag);
 
 	private:
- 		bool m_drag;
- 		int m_hotSpotX, m_hotSpotY;
+ 		bool m_drag;					//deprecated
+ 		int m_hotSpotX, m_hotSpotY;		//deprecated
 		void _DispatchEvent(sf::Event* event);
 		void _StartDrag(int x, int y);
 		void _LoseFocus(bool forgetFocus = true);
@@ -205,7 +213,6 @@ namespace gui {
 		void SaveLayout(TiXmlNode* node) const;
 		void SaveUI(TiXmlNode* node) const;
 		void ResolveChildCollisions();
-		
 	};
 
 

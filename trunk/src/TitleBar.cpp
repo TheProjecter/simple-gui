@@ -115,8 +115,9 @@ namespace gui
 	void TitleBar::Draw() const
 	{
 		Widget::Draw();
-		if(s_gui && s_gui->GetWindow()) 
-			s_gui->GetWindow()->Draw(m_titleVisibleText);
+		if(!s_gui) return;
+			
+		s_gui->GetWindow().Draw(m_titleVisibleText);
 	}
 
 	void TitleBar::InitGraphics()

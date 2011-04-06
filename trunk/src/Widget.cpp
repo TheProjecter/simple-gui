@@ -162,6 +162,7 @@ namespace gui {
 
 		OnResize();
 		InitGraphics();
+		UpdateClipArea();
 	}
 
 	void Widget::SetPos( int x, int y, bool forceMove /* = false */)
@@ -220,6 +221,7 @@ namespace gui {
 		else m_sprite->SetPosition(m_rect.GetPos());
 
 		OnMove();
+		UpdateClipArea();
 	}
 
 	void Widget::SetPos( const sf::Vector2f& pos, bool forceMove /*= false*/)
@@ -352,7 +354,7 @@ namespace gui {
 
 	void Widget::Update( float diff )
 	{
-		if(m_dead || !s_gui->GetWindow()) return;
+		if(m_dead) return;
 		
 		//handle the events..also takes care of child widget events
 		_HandleEvents();
@@ -445,14 +447,15 @@ namespace gui {
 
 	void Widget::Draw() const
 	{
-		if(!s_gui->GetWindow()) return;
-
 		if(m_visible)
-			s_gui->GetWindow()->Draw(m_shape);
+			s_gui->GetWindow().Draw(m_shape);
 
 		//also draw children if any
 		for(WidgetList::const_iterator it = m_widgets.begin(); it != m_widgets.end(); it++) {
-			it->second->Draw();
+			//don't draw outside parent's rect
+			StartClipping();
+				it->second->Draw();
+			StopClipping();
 		}
 	}
 
@@ -460,14 +463,14 @@ namespace gui {
 	//deprecated?
 	void Widget::Draw( const sf::Image* image )
 	{
-		if(!image || !s_gui->GetWindow()) return;
+		if(!image) return;
 		
 		sf::Sprite sprite;
 		sprite.SetImage(*image);
 		sprite.SetPosition(GetPos());
 		sprite.Resize(GetSize());
 		sprite.SetColor(sf::Color(255,255,255,m_transparency));
-		s_gui->GetWindow()->Draw(sprite);
+		s_gui->GetWindow().Draw(sprite);
 
 	}
 	sf::Vector2f Widget::GetSize() const
@@ -477,9 +480,7 @@ namespace gui {
 
 	void Widget::ConvertCoords( sf::Vector2f& coords )
 	{
-		if(!s_gui->GetWindow()) return;
-
-		coords = s_gui->GetWindow()->ConvertCoords((int)coords.x,(int)coords.y);
+		coords = s_gui->GetWindow().ConvertCoords((int)coords.x,(int)coords.y);
 	}
 
 	void Widget::HideChildren()
@@ -579,11 +580,18 @@ namespace gui {
 				switch(event->Type) {
 					case sf::Event::MouseButtonPressed:
 						{
-							WidgetList::iterator itr = m_widgets.begin();
-							for(; itr!=m_widgets.end(); itr++) {
+							WidgetList::reverse_iterator itr = m_widgets.rbegin();
+							for(; itr!=m_widgets.rend(); itr++) {
+								//you don't get events if dead or hidden
+								if(itr->second->IsDead() || itr->second->IsHidden()) 
+									continue;
+								//you don't get events if hidden behind the parent's clip rect
+								if(!itr->second->IsCollision(NormalizeClipArea())) 
+									continue;
+
 								int x = m_events[i]->MouseButton.X;
 								int y = m_events[i]->MouseButton.Y;
-								sf::Vector2f v = s_gui->GetWindow()->ConvertCoords(x,y);
+								sf::Vector2f v = s_gui->GetWindow().ConvertCoords(x,y);
 								x = (int)v.x; y = (int)v.y;
 								if(itr->second->IsCollision(Rect(x,y,2,2))) {
 									SetFocus(itr->second);						
@@ -600,7 +608,7 @@ namespace gui {
 								} 
 							}
 							//if no collisions occurred then it's your event...
-							if(itr == m_widgets.end()) {
+							if(itr == m_widgets.rend()) {
 								//make current focus lose focus..
 								if(m_focus) {
 									m_focus->_LoseFocus();
@@ -615,7 +623,7 @@ namespace gui {
 							sf::Vector2f v;
 							v.x = (float)m_events[i]->MouseButton.X;
 							v.y = (float)m_events[i]->MouseButton.Y;
-							v = s_gui->GetWindow()->ConvertCoords((int)v.x,(int)v.y);
+							v = s_gui->GetWindow().ConvertCoords((int)v.x,(int)v.y);
 
 							//focus will get the event even if it's not colliding!
 							m_focus->RegisterEvent(event);
@@ -1025,7 +1033,7 @@ namespace gui {
 
 	sf::RenderWindow* Widget::GetWindow() const
 	{
-		return s_gui->GetWindow();
+		return &s_gui->GetWindow();
 	}
 
 	Drag::DropFlags Widget::GetDropFlags() const
@@ -1203,5 +1211,67 @@ namespace gui {
 				attempts++;
 			} else return;
 		}
+	}
+
+	void Widget::StartClipping() const
+	{
+		if(!s_gui) return;
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(m_clipRect.x, m_clipRect.y, m_clipRect.w, m_clipRect.h); 
+	}
+
+	void Widget::StopClipping() const
+	{
+		glDisable(GL_SCISSOR_TEST);
+	}
+
+	bool Widget::IsVisible() const
+	{
+		return m_visible;
+	}
+
+	bool Widget::IsHidden() const
+	{
+		return !m_visible;
+	}
+
+	void Widget::UpdateClipArea()
+	{
+// 		if(!s_gui) return;
+// 		m_clipRect = m_rect;
+// 		sf::Vector2f pos = m_rect.GetPos();
+// 		ConvertCoords(pos);
+// 		m_clipRect.x = (int)pos.x;
+// 		m_clipRect.y = s_gui->GetWindow().GetHeight() - (int)pos.y - m_rect.h;
+		ResizeClipArea(s_gui->GetOldWidth(),s_gui->GetOldHeight());
+	}
+
+	gui::Rect Widget::NormalizeClipArea() const
+	{
+		Rect temp = m_clipRect;
+		temp.y = m_rect.y;
+		return temp;
+	} 
+
+	void Widget::ResizeClipArea( uint32 newWidth, uint32 newHeight )
+	{
+// 		m_clipRect.w *= newWidth;
+// 		m_clipRect.h *= newHeight;
+		double width = s_gui->GetWindow().GetView().GetHalfSize().x*2;
+		double height = s_gui->GetWindow().GetView().GetHalfSize().y*2;
+
+		double xprc = newWidth/width;
+		double yprc = newHeight/height;
+		double wprc = newWidth/width;
+		double hprc = newHeight/height;
+
+		m_clipRect = m_rect;
+
+		m_clipRect.x *= xprc;
+		m_clipRect.y *= yprc;
+		m_clipRect.w *= wprc;
+		m_clipRect.h *= hprc;
+		
+		m_clipRect.y = newHeight - (int)m_clipRect.y - m_clipRect.h;
 	}
 }

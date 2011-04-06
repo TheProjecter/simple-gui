@@ -20,8 +20,8 @@ namespace gui
 	void LineEdit::Draw() const
 	{
 		Widget::Draw();
-		if(!m_visible || !s_gui->GetWindow()) return;
-		s_gui->GetWindow()->Draw(m_visibleText);
+		if(!m_visible) return;
+		s_gui->GetWindow().Draw(m_visibleText);
 
 		//make the cursor blink every 300 ms
 		if(m_cursorDiff > 300) {
@@ -29,7 +29,7 @@ namespace gui
 			m_cursorShow = !m_cursorShow;
 		}
 		if(m_cursorShow && IsFocus())
-			s_gui->GetWindow()->Draw(m_cursor);
+			s_gui->GetWindow().Draw(m_cursor);
 		
 	}
 /*
@@ -70,56 +70,54 @@ namespace gui
 		} else if(event->Key.Code == sf::Key::Right) {
 			if(m_cursorIndex >= m_totalText.size()) return;
 
-			if(s_gui->GetWindow()) {
-				const sf::Input& input = s_gui->GetWindow()->GetInput();
-				if(input.IsKeyDown(sf::Key::LControl) ||
-				   input.IsKeyDown(sf::Key::RControl)) 
-				{
-					//calculate the displacement
-					int temp = m_cursorIndex;
-					m_cursorIndex = _FindCursorPos(m_totalText,m_cursorIndex,1);
-					temp = m_cursorIndex - temp;
-					if(m_cursorIndex > m_cursorStartIndex+m_visibleChars) {
-						m_cursorStartIndex += temp;
-						TestSizeErrors(true);
-					} else TestSizeErrors();
-				} else if(m_cursorIndex < (m_cursorStartIndex + m_visibleChars) ) {
+			const sf::Input& input = s_gui->GetWindow().GetInput();
+			if(input.IsKeyDown(sf::Key::LControl) ||
+			   input.IsKeyDown(sf::Key::RControl)) 
+			{
+				//calculate the displacement
+				int temp = m_cursorIndex;
+				m_cursorIndex = _FindCursorPos(m_totalText,m_cursorIndex,1);
+				temp = m_cursorIndex - temp;
+				if(m_cursorIndex > m_cursorStartIndex+m_visibleChars) {
+					m_cursorStartIndex += temp;
+					TestSizeErrors(true);
+				} else TestSizeErrors();
+			} else if(m_cursorIndex < (m_cursorStartIndex + m_visibleChars) ) {
+				m_cursorIndex++;
+				TestSizeErrors();
+			} else {
+				if(m_cursorIndex < m_totalText.size()) {
+					m_cursorStartIndex++;
 					m_cursorIndex++;
-					TestSizeErrors();
-				} else {
-					if(m_cursorIndex < m_totalText.size()) {
-						m_cursorStartIndex++;
-						m_cursorIndex++;
-						TestSizeErrors(true);
-					}
+					TestSizeErrors(true);
 				}
-				SetVisibleText();
-				_SetCursorPos();
-				return;
 			}
+			SetVisibleText();
+			_SetCursorPos();
+			return;
+		
 
 		} else if(event->Key.Code == sf::Key::Left) {
 
-			if(s_gui->GetWindow()) {
-				const sf::Input& input = s_gui->GetWindow()->GetInput();
-				if(input.IsKeyDown(sf::Key::LControl) ||
-					input.IsKeyDown(sf::Key::RControl)) {
-						m_cursorIndex = _FindCursorPos(m_totalText,m_cursorIndex,-1);
-						m_cursorStartIndex = 0;
-						m_visibleChars = m_totalText.size();
-				} else if(m_cursorIndex > 0 && m_totalText.size()) {
-					if(m_cursorIndex > m_cursorStartIndex) {
-						m_cursorIndex--;						
-					} else {
-						m_cursorIndex--;
-						if(m_cursorStartIndex>0) {
-							m_cursorStartIndex--;
-						}
+			const sf::Input& input = s_gui->GetWindow().GetInput();
+			if(input.IsKeyDown(sf::Key::LControl) ||
+				input.IsKeyDown(sf::Key::RControl)) {
+					m_cursorIndex = _FindCursorPos(m_totalText,m_cursorIndex,-1);
+					m_cursorStartIndex = 0;
+					m_visibleChars = m_totalText.size();
+			} else if(m_cursorIndex > 0 && m_totalText.size()) {
+				if(m_cursorIndex > m_cursorStartIndex) {
+					m_cursorIndex--;						
+				} else {
+					m_cursorIndex--;
+					if(m_cursorStartIndex>0) {
+						m_cursorStartIndex--;
 					}
-					
 				}
-				changed = true;
+				
 			}
+			changed = true;
+			
 
 		} else if(event->Key.Code == sf::Key::Home){
 			m_cursorStartIndex = 0;
