@@ -17,8 +17,7 @@ namespace gui {
 	class GuiManager 
 	{
 	public:
-		GuiManager();
-		GuiManager(sf::RenderWindow* window);
+		GuiManager(sf::RenderWindow& window);
 		~GuiManager();
 
 		void Initialize(sf::RenderWindow * renderTarget);
@@ -27,7 +26,7 @@ namespace gui {
 		Theme* GetTheme() const;
 
 		void SetWindow(sf::RenderWindow* window);
-		sf::RenderWindow* GetWindow() const;
+		sf::RenderWindow& GetWindow() const;
 		void RegisterEvent(sf::Event* event);
 
 		bool AddWidget(Widget* widget);
@@ -55,6 +54,9 @@ namespace gui {
 		std::stack<Widget*> QueryWidgetPath(const std::string& path) const;
 		Widget* QueryWidget(const std::string& path) const;
 		sf::Vector2f ConvertCoords(int x, int y);
+
+		gui::uint32 GetOldWidth() const;
+		gui::uint32 GetOldHeight() const;
 	private:
 		friend class GuiMgrParser;
 		typedef std::map<uint32, Widget*> WidgetList;
@@ -65,13 +67,17 @@ namespace gui {
 		std::vector<sf::Event*> m_events;	//events queue
 		Widget* m_focus;					//holds the currently focused widget if any
 		Widget* m_hoverTarget;
-		sf::RenderWindow* m_window;			//pointer to the window we're working on
+		sf::RenderWindow& m_window;			//pointer to the window we're working on
 		uint32 m_hotSpotX, m_hotSpotY;		//used for dragging			
 		bool m_drag;						//flag for determining whether drag is happening
 		std::vector<AbstractFactory*> m_factories;
 		GuiMgrParser m_parser;
 		mutable Mediator m_mediator;
 		Drag* m_curDrag;
+
+		//used when resizing
+		uint32 m_oldWidth;
+		uint32 m_oldHeight;
 
 		void SetHasFocus(WidgetList::reverse_iterator& i);
 		void StartDrag(Widget* widget, sf::Event* event);	//deprecated?

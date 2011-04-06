@@ -28,9 +28,9 @@ namespace gui
 	}
 	void Button::Draw() const
 	{
-		if(!m_visible || !s_gui->GetWindow()) return;
+		if(!m_visible) return;
 		Widget::Draw();
-		s_gui->GetWindow()->Draw(m_text);
+		s_gui->GetWindow().Draw(m_text);
 	}
 
 	void Button::OnClickPressed(sf::Event* event)
@@ -106,10 +106,10 @@ namespace gui
 
 	void ImageButton::Draw() const
 	{
-		if(!m_sprite || !s_gui->GetWindow() || !m_visible) return;
+		if(!m_sprite || !m_visible) return;
 
-		s_gui->GetWindow()->Draw(*m_sprite);
-		s_gui->GetWindow()->Draw(m_text);
+		s_gui->GetWindow().Draw(*m_sprite);
+		s_gui->GetWindow().Draw(m_text);
 
 		//buttons should really have children in the first place :|
 // 		for(WidgetList::iterator it = m_widgets.begin(); 

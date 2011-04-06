@@ -9,8 +9,7 @@ namespace gui {
 		Widget::Draw();
 
 		//then draw the text
-		if(s_gui->GetWindow())
-			s_gui->GetWindow()->Draw(text);
+		s_gui->GetWindow().Draw(text);
 	}
 	void Label::SetPos(int x, int y, bool forceMove /*=false*/)
 	{

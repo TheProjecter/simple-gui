@@ -37,21 +37,15 @@ namespace gui
 					Kill();
 					debug_log("Closing window \"%s\"",m_name.c_str());
 				} else if(w->GetWidget()->GetName() == "min") {
-					//TODO: hardcoded value!!
-					if(m_minimized) {
-						Resize(m_rect.w, m_oldSizeMin.h);
-						m_minimized = false;
-					} else {
-						m_oldSizeMin = m_rect;
-						m_minimized = true;
-						Resize(m_rect.w,15);	
-					}
+					m_minimized = ! m_minimized;
+
+					UpdateClipArea();
 					debug_log("Minimizing window \"%s\"",m_name.c_str());
 				} else if(w->GetWidget()->GetName() == "max") {
 					if(!m_maximized) {
 						m_oldSizeMax = m_rect;
 						SetPos(0,0,true);
-						Resize(s_gui->GetWindow()->GetWidth(),s_gui->GetWindow()->GetHeight());
+						Resize(s_gui->GetWindow().GetWidth(),s_gui->GetWindow().GetHeight());
 						m_maximized = true;
 					} else { //restored
 						m_rect = m_oldSizeMax;
@@ -88,5 +82,38 @@ namespace gui
 		
 		//if it's not the titlebar.. do the usual
 		Widget::HandleDragStop(drag);
+	}
+
+	void Window::UpdateClipArea()
+	{
+		if(!s_gui) return;
+
+		if(m_minimized) {
+			int temp = m_rect.h;
+			//todo: hardcoded minimize value here:
+			m_rect.h = 15;
+			Widget::UpdateClipArea();
+			m_rect.h = temp;
+		} else {
+			Widget::UpdateClipArea();
+		}
+	}
+
+	void Window::Draw() const
+	{
+		if(!m_visible) return;
+
+		StartClipping();
+			s_gui->GetWindow().Draw(m_shape);
+		StopClipping();
+		
+		//also draw children if any
+		for(WidgetList::const_iterator it = m_widgets.begin(); it != m_widgets.end(); it++) {
+			//don't draw outside parent's rect
+			StartClipping();
+				it->second->Draw();
+			StopClipping();
+		}
+
 	}
 }

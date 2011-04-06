@@ -97,7 +97,7 @@ namespace gui
 	void Slider::Draw() const
 	{
 		Widget::Draw();
-		if(!m_cursor || !s_gui->GetWindow()) return;
+		if(!m_cursor) return;
 
 		sf::Sprite sprite;
 		sprite.SetImage(*m_cursor);
@@ -105,7 +105,7 @@ namespace gui
 		sprite.Resize(sf::Vector2f((float)m_cursorRect.w,(float)m_cursorRect.h));
 		sprite.SetColor(sf::Color(255,255,255,m_transparency));
 
-		s_gui->GetWindow()->Draw(sprite);
+		s_gui->GetWindow().Draw(sprite);
 	}
 	void Slider::OnClickReleased(sf::Event *event)
 	{

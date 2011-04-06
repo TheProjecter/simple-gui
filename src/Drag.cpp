@@ -41,7 +41,7 @@ namespace gui
 		  m_dropStatus(NotStarted)
 	{
 		if(m_target) {
-			m_forceDragFlags = m_target->GetDropFlags();
+			m_forceDragFlags = /*m_target->GetDropFlags()*/ Anywhere; //debug
 			if(event) {
 				m_targetParent = m_target->GetParent();
 
