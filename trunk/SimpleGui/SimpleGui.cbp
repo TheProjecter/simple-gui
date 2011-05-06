@@ -23,6 +23,8 @@
 				</Compiler>
 				<Linker>
 					<Add library="tinyxml" />
+					<Add library="opengl32" />
+					<Add library="glu32" />
 				</Linker>
 			</Target>
 			<Target title="Release Win32">
@@ -63,14 +65,16 @@
 		<Unit filename="..\include\GUI\Window.hpp" />
 		<Unit filename="..\src\TitleBar.cpp" />
 		<Unit filename="..\include\GUI\TitleBar.hpp" />
+		<Unit filename="..\src\UiEditor.cpp" />
+		<Unit filename="..\include\GUI\UiEditor.hpp" />
+		<Unit filename="..\src\GridLayout.cpp" />
+		<Unit filename="..\include\GUI\GridLayout.hpp" />
 		<Unit filename="..\src\Debug.cpp" />
 		<Unit filename="..\include\GUI\Debug.hpp" />
 		<Unit filename="..\src\Defines.cpp" />
 		<Unit filename="..\include\GUI\Defines.hpp" />
 		<Unit filename="..\src\Settings.cpp" />
 		<Unit filename="..\include\GUI\Settings.hpp" />
-		<Unit filename="..\src\Property.cpp" />
-		<Unit filename="..\include\GUI\Property.hpp" />
 		<Unit filename="..\src\Theme.cpp" />
 		<Unit filename="..\include\GUI\Theme.hpp" />
 		<Unit filename="..\src\Event.cpp" />
@@ -84,6 +88,8 @@
 		<Unit filename="..\include\GUI\GuiMgrParser.hpp" />
 		<Unit filename="..\src\Mediator.cpp" />
 		<Unit filename="..\include\GUI\Mediator.hpp" />
+		<Unit filename="..\src\Drag.cpp" />
+		<Unit filename="..\include\GUI\Drag.hpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />

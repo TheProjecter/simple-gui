@@ -30,8 +30,8 @@ namespace gui
 	public:
 		TextArea();
 		void SetText(const std::string& text);
-		void Resize(int w, int h);
-		void SetPos(int x, int y, bool forceMove  = false );
+		void Resize(int w, int h, bool save = true);
+		void SetPos(int x, int y, bool forceMove  = false ,bool save=true);
 	private:
 		std::string m_text;
 		std::vector<Line> m_lines;

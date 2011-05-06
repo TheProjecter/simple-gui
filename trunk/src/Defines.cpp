@@ -195,6 +195,16 @@ namespace gui {
 		return sf::Vector2i(w,h);
 	}
 
+	void Rect::SetSize( uint32 width, uint32 height )
+	{
+		w = width; h = height;
+	}
+
+	void Rect::SetPos( int32 x, int32 y )
+	{
+		this->x = x; this->y = y;
+	}
+
 	void Functor::operator()()
 	{
 		std::cout << "Debugging Functor()" << std::endl;

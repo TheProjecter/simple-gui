@@ -9,7 +9,7 @@ namespace gui {
 	public:
 		Button();
 		void SetText(const std::string& text);
-		void SetPos(int x, int y, bool forceMove = false);
+		void SetPos(int x, int y, bool forceMove = false,bool save=true);
 		
 	protected:
 		virtual void Draw() const;
@@ -23,6 +23,8 @@ namespace gui {
 		bool m_active;
 		sf::String m_text;
 	};	
+
+
 
 	class ImageButton : public Button 
 	{

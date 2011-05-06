@@ -8,6 +8,9 @@ namespace gui
 	{
 		m_movable = false; 
 		m_type = SLIDER;
+		m_cursorRect.w = 15;
+
+		SetLimits(m_lowerLimit,m_upperLimit);
 	}
 
 	Slider::Slider( int upper, int lower ) : m_curValue(0),m_lowerLimit(lower),
@@ -16,7 +19,8 @@ namespace gui
 	{
 		m_movable = false;
 		m_type = SLIDER;
-		SetLimits(upper,lower);
+		m_cursorRect.w = 15;
+		SetLimits(m_lowerLimit,m_upperLimit);
 	}
 	int Slider::GetValue()
 	{
@@ -153,15 +157,10 @@ namespace gui
 		}
 	}
 
-	void Slider::Resize(int w, int h)
+	void Slider::Resize(int w, int h, bool save /*=true*/)
 	{
-		m_needUpdate = true;
-
-		m_rect.w = w; m_rect.h = h;
-		m_cursorRect.w = w/15;
+		Widget::Resize(w,h,save);
 		m_cursorRect.h = h;
-		if(m_cursorRect.w == 0) 
-			m_cursorRect.w = 1;
 	}
 
 	void Slider::CalculateSliderPos()

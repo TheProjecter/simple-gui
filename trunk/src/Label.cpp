@@ -11,9 +11,10 @@ namespace gui {
 		//then draw the text
 		s_gui->GetWindow().Draw(text);
 	}
-	void Label::SetPos(int x, int y, bool forceMove /*=false*/)
+	void Label::SetPos(int x, int y, bool forceMove /*=false*/, bool save /*=true*/)
 	{
-		m_rect.x = x; m_rect.y = y;  
+		Widget::SetPos(x,y,forceMove,save);
+
 		switch(alignment) {
 			case Left:	
 				text.SetPosition((float)x+5, (float)y+5);			
