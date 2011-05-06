@@ -39,18 +39,19 @@ gui::TextArea::TextArea(): m_viewableLines(1),m_totalLines(1),
 	
 }
 
-void gui::TextArea::Resize( int w, int h )
+void gui::TextArea::Resize( int w, int h , bool save /*=true*/)
 {
-	Widget::Resize(w,h);
+	Widget::Resize(w,h,save);
 	std::stringstream s; 
 	s.str(m_text);
 	Parse(s,m_lines,m_rect);	//this will also set the pos of the text
 	SetPos(m_rect.x,m_rect.y,true);
 }
 
-void gui::TextArea::SetPos( int x, int y, bool forceMove /* = false */ )
+void gui::TextArea::SetPos( int x, int y, bool forceMove, /* = false */
+							bool save /*=true*/)
 {
-	Widget::SetPos(x,y,forceMove);
+	Widget::SetPos(x,y,forceMove,save);
 	uint32 line_spacing = 0;
 	for(uint32 i=0; i<m_lines.size(); i++) {
 		//find the spacing for the next line

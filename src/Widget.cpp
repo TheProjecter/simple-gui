@@ -144,7 +144,7 @@ namespace gui {
 		m_individualTheme = true;
 	}
 
-	void Widget::Resize( int w, int h )
+	void Widget::Resize( int w, int h , bool save /*=true*/)
 	{
 		m_rect.w = w; 
 		m_rect.h = h; 
@@ -157,15 +157,17 @@ namespace gui {
 		} else {
 			m_sprite->Resize((float)m_rect.w, (float)m_rect.h);
 		}
-		m_settings.SetUint32Value("width", m_rect.w);
-		m_settings.SetUint32Value("height", m_rect.h);
-
+		if(save) {
+			m_settings.SetUint32Value("width", m_rect.w);
+			m_settings.SetUint32Value("height", m_rect.h);
+		}
 		OnResize();
 		InitGraphics();
 		UpdateClipArea();
 	}
 
-	void Widget::SetPos( int x, int y, bool forceMove /* = false */)
+	void Widget::SetPos( int x, int y, bool forceMove, /* = false */
+						 bool save /*=true*/ )
 	{
 		if(!m_movable && !forceMove) return;
 
@@ -211,10 +213,11 @@ namespace gui {
 			widget->SetPos(xpos,ypos,true); //force child widgets to move!
 		}
 		ResolveChildCollisions();	//this is slightly broken!
-		m_settings.SetInt32Value("posx",m_rect.x);
-		m_settings.SetInt32Value("posy",m_rect.y);
-// 		m_settings.SetUint32Value("width", m_rect.w);
-// 		m_settings.SetUint32Value("height", m_rect.h);
+
+		if(save) {
+			m_settings.SetInt32Value("posx",m_rect.x);
+			m_settings.SetInt32Value("posy",m_rect.y);
+		}
 
 		if(!m_sprite)
 			m_shape.SetPosition(m_rect.GetPos());
@@ -224,9 +227,10 @@ namespace gui {
 		UpdateClipArea();
 	}
 
-	void Widget::SetPos( const sf::Vector2f& pos, bool forceMove /*= false*/)
+	void Widget::SetPos( const sf::Vector2f& pos, bool forceMove, /*= false*/
+						 bool save /*=true*/)
 	{
-		SetPos((int)pos.x,(int)pos.y,forceMove);
+		SetPos((int)pos.x,(int)pos.y,forceMove,save);
 	}
 
 	const Rect& Widget::GetRect() const
@@ -360,13 +364,13 @@ namespace gui {
 		_HandleEvents();
 
 		//check if the current focus just died
-		if(m_focus && m_focus->IsDead()) 
+		if(m_focus && m_focus->m_dead) 
 			m_focus = NULL;
-		if(m_hoverTarget && m_hoverTarget->IsDead())
+		if(m_hoverTarget && m_hoverTarget->m_dead)
 			m_hoverTarget = NULL;
 
 		for(WidgetList::iterator it=m_widgets.begin(); it!=m_widgets.end();it++) {
-			if(it->second->IsDead()) {
+			if(it->second->m_dead) {
 				m_freeWidgets.push_back(it->second);
 			} else it->second->Update(diff);
 		}
@@ -583,7 +587,7 @@ namespace gui {
 							WidgetList::reverse_iterator itr = m_widgets.rbegin();
 							for(; itr!=m_widgets.rend(); itr++) {
 								//you don't get events if dead or hidden
-								if(itr->second->IsDead() || itr->second->IsHidden()) 
+								if(itr->second->m_dead || itr->second->IsHidden()) 
 									continue;
 								//you don't get events if hidden behind the parent's clip rect
 								if(!itr->second->IsCollision(NormalizeClipAreaView())) 
@@ -1182,8 +1186,14 @@ namespace gui {
 		return cur;
 	}
 
+
 	bool Widget::IsDead() const
 	{
+		//recursively called up the hierarchy tree
+		if(GetParent() && GetParent()->IsDead()) {
+			return true;
+		}
+		//no more parents.. are you dead?
 		return m_dead;
 	}
 
@@ -1303,4 +1313,23 @@ namespace gui {
 		m_clipRect.y = newHeight - m_clipRect.y - m_clipRect.h;
 	}
 
+	gui::Widget::SizePolicy Widget::GetVerticalPolicy() const
+	{
+		return m_verticalPolicy;
+	}
+
+	gui::Widget::SizePolicy Widget::GetHorizontalPolicy() const
+	{
+		return m_horizontalPolicy;
+	}
+
+	void Widget::SetSizeHint( const sf::Vector2i& size )
+	{
+		m_sizeHint = size;
+	}
+
+	const sf::Vector2i& Widget::GetSizeHint() const
+	{
+		return m_sizeHint;
+	}
 }

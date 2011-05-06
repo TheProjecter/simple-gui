@@ -18,17 +18,29 @@ namespace gui {
 		friend class GuiMgrParser;
 		typedef std::map<uint32, Widget*> WidgetList;	
 
+		enum SizePolicy {
+			Default,
+			Fixed,
+			MinimumExpand,
+			MaximumExpand,
+			ScaledExpand,
+		};
+
+
 		Widget();
 		Widget(const std::string& name);
 		virtual ~Widget();
 
 		//returns false if there's already a widget with the same name!
 		bool AddWidget(Widget* child);
+
 		//renames the widget by _xx to force the add to happen, where xx 
 		//is the number of renames it took. ex: my_button_1
 		void AddWidgetForced(Widget* child);
+
 		//Free the child widget
 		void DeleteWidget(const std::string& widgetName);
+
 		//Removes the child widget from management, doesn't free it
 		//return false if the widget isn't a child of the current widget
 		bool RemoveWidget(Widget* widget);
@@ -60,9 +72,9 @@ namespace gui {
 		virtual void ReloadSettings();
 		Mediator& GetMediator() const;
 
-		virtual void Resize(int w, int h);
-		virtual void SetPos(int x, int y, bool forceMove = false);
-		virtual void SetPos(const sf::Vector2f& pos, bool forceMove = false);
+		virtual void Resize(int w, int h,bool save = true);
+		virtual void SetPos(int x, int y, bool forceMove = false, bool save = true);
+		virtual void SetPos(const sf::Vector2f& pos, bool forceMove = false, bool save = true);
 		void Move(int x, int y );
 
 		uint8 GetTransparency() const;
@@ -107,10 +119,15 @@ namespace gui {
 
 		Drag::DropFlags GetDropFlags() const;
 		virtual bool AcceptsDrop(Drag* drag) const;
+
+		const sf::Vector2i& GetSizeHint() const;
+		void SetSizeHint(const sf::Vector2i& size); 
 		
 		bool IsDead() const;
 		void Kill();
 
+		SizePolicy GetVerticalPolicy() const;
+		SizePolicy GetHorizontalPolicy() const;
 		virtual void Draw() const;
 	protected:
 		/* Attributes */
@@ -145,6 +162,13 @@ namespace gui {
 		Drag::DropFlags m_dropFlags;		//specifies the drop policy(where the widget may be dropped)
 		bool m_dead;						//if widget committed suicided it will be removed at the next updated
 		std::vector<Widget*> m_freeWidgets;	//widgets that will be deleted at each updated, if any
+		
+		SizePolicy m_verticalPolicy;		//the vertical resize policy
+		SizePolicy m_horizontalPolicy;		//the horizontal resize policy
+		//Rect m_minSize;		//the minimum the the widget won't go pass
+		//Rect m_maxSize;		//the max size ---||---
+		//Rect m_visibleRect;	//normalized clip area ?
+		sf::Vector2i m_sizeHint;			//desired rect, which may be modified by layouts etc
 		
 		/* Static member data */
 		static GuiManager* s_gui;			//pointer to the current gui

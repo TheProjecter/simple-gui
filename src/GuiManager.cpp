@@ -182,6 +182,14 @@ namespace gui {
 			}
 		}
 		m_freeWidgets.clear();
+
+		//draw the drag if any
+		if(m_curDrag) {
+			Widget* parent = m_curDrag->GetTargetParent();
+			if(!parent || parent->IsDead()) return;
+
+			parent->HandleDragDraw(m_curDrag);
+		}
 	}
 
 	void GuiManager::RegisterEvent( sf::Event* event )

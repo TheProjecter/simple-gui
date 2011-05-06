@@ -125,6 +125,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalDependencies="tinyxml.lib opengl32.lib glu32.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -297,6 +298,22 @@
 						RelativePath="..\include\GUI\UiEditor.hpp"
 						>
 					</File>
+				</Filter>
+				<Filter
+					Name="Layouts"
+					>
+					<Filter
+						Name="GridLayout"
+						>
+						<File
+							RelativePath="..\src\GridLayout.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\include\GUI\GridLayout.hpp"
+							>
+						</File>
+					</Filter>
 				</Filter>
 			</Filter>
 			<Filter

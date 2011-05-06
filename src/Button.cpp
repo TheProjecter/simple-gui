@@ -65,9 +65,10 @@ namespace gui
 		m_type = BUTTON;
 	}
 
-	void Button::SetPos( int x, int y, bool forceMove /*= false */)
+	void Button::SetPos( int x, int y, bool forceMove, /*= false */
+						 bool save /*=true*/)
 	{
-		Widget::SetPos(x,y,forceMove);
+		Widget::SetPos(x,y,forceMove,save);
 		std::stringstream s;
 
 		m_text.SetPosition(m_rect.x+m_rect.w/2-m_text.GetRect().GetWidth()/2,

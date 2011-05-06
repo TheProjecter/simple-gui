@@ -24,6 +24,7 @@ namespace gui {
 		RADIOBOX, 
 		SLIDER,
 		TITLE_BAR,
+		GRID_LAYOUT,
 		WIDGETS_COUNT
 	};
 
@@ -72,7 +73,7 @@ namespace gui {
 
 	/* A simple and useful Rect class */
 	struct Rect {
-		Rect(int X=0, int Y=0,int W=0, int H=0);
+		Rect(int32 X=0, int32 Y=0,int32 W=0, int32 H=0);
 		Rect(const sf::Vector2i& pos, const sf::Vector2i& size);
 		Rect(const sf::Vector2f& pos, const sf::Vector2f& size);
 		Rect(const Rect& rect);
@@ -95,9 +96,12 @@ namespace gui {
 		sf::Vector2f GetPos() const;
 		sf::Vector2i GetSize() const;
 
+		void SetSize(uint32 width, uint32 height);
+		void SetPos(int32 x, int32 y);
+
 		//conversion operator with sf::IntRect
 		operator sf::IntRect() const;
-		int x,y,w,h;
+		int32 x,y,w,h;
 	};
 
 	sf::Shape TwoColoredRectangle(int width, int height, sf::Color upper, sf::Color lower);

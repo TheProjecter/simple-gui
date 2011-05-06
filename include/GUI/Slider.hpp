@@ -13,7 +13,7 @@ namespace gui
 			void SetPos(int x, int y, bool forceMove = false);
 			int GetValue();
 			void SetValue(int value);
-			void Resize(int w, int h);
+			void Resize(int w, int h, bool save = true);
 		private:
 			int m_curValue;
 			int m_upperLimit, m_lowerLimit;
