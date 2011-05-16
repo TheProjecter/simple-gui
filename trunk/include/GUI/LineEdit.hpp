@@ -16,6 +16,7 @@ namespace gui {
 		void _SetCursorPos();
 		uint32 _FindCursorPos(const std::string& text, uint32 pos,int searchType);
 	protected:
+		void InitGraphics();
 		void Update(float diff);
 		void SetVisibleText();
 		void TestSizeErrors(bool moveStartIndex = false);

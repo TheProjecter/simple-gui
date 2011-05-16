@@ -363,4 +363,14 @@ namespace gui
 		}
 		return i;
 	}
+
+	void LineEdit::InitGraphics()
+	{
+		if(m_settings.HasUint32Value("line-edit_bg_color")) {
+			m_shape.SetColor(UnsignedToColor(m_settings.GetUint32Value("background-color")));
+			m_individualTheme = true;
+		} else if(s_gui->GetTheme()){
+			m_shape.SetColor(s_gui->GetTheme()->GetColor("line-edit_bg_color"));
+		}		
+	}
 }

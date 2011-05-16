@@ -21,9 +21,9 @@ namespace gui {
 		enum SizePolicy {
 			Default,
 			Fixed,
-			MinimumExpand,
-			MaximumExpand,
 			ScaledExpand,
+			MinimumExpand,
+			MaximumExpand
 		};
 
 
@@ -32,7 +32,7 @@ namespace gui {
 		virtual ~Widget();
 
 		//returns false if there's already a widget with the same name!
-		bool AddWidget(Widget* child);
+		virtual bool AddWidget(Widget* child);
 
 		//renames the widget by _xx to force the add to happen, where xx 
 		//is the number of renames it took. ex: my_button_1
@@ -43,7 +43,7 @@ namespace gui {
 
 		//Removes the child widget from management, doesn't free it
 		//return false if the widget isn't a child of the current widget
-		bool RemoveWidget(Widget* widget);
+		virtual bool RemoveWidget(Widget* widget);
 
 		uint32 GetType() const;
 		void SetType(uint32 type);
@@ -221,12 +221,13 @@ namespace gui {
 
 		virtual Drag* CreateDrag(sf::Event* event);
 
-		virtual void HandleDragMove(Drag* drag);	//will be called when the drag moves
-		virtual void HandleDragDraw(Drag* drag);	//will be called when the drag needs to be drawn
-		virtual void HandleDragStop(Drag* drag);	//will be called when the drag ended
-		virtual void HandleDragDrop(Drag* drag);	//will be called when you receive a drop
-		virtual void SetPosFromDrag(Drag* drag);
+		virtual bool HandleDragMove(Drag* drag);	//will be called when the drag moves
+		virtual bool HandleDragDraw(Drag* drag);	//will be called when the drag needs to be drawn
+		virtual bool HandleDragStop(Drag* drag);	//will be called when the drag ended
+		virtual bool HandleDragDrop(Drag* drag);	//will be called when you receive a drop
+		virtual bool SetPosFromDrag(Drag* drag);
 
+		bool ContainsWidget(Widget* widget);
 	private:
  		bool m_drag;					//deprecated
  		int m_hotSpotX, m_hotSpotY;		//deprecated

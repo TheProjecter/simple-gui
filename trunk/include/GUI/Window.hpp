@@ -18,8 +18,8 @@ namespace gui
 		Rect m_oldSizeMax;			//used to restore to previous max size
 		bool m_maximized;
 		bool m_minimized;
-		virtual void SetPosFromDrag(Drag* drag);
-		virtual void HandleDragStop(Drag* drag);
+		virtual bool SetPosFromDrag(Drag* drag);
+		virtual bool HandleDragStop(Drag* drag);
 		virtual void UpdateClipArea();
 	private:
 	};

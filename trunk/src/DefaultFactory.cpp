@@ -8,6 +8,7 @@
 #include "../include/gui/Slider.hpp"
 #include "../include/gui/TextArea.hpp"
 #include "../include/gui/Widget.hpp"
+#include "../include/gui/GridLayout.hpp"
 
 namespace gui
 {
@@ -29,6 +30,8 @@ namespace gui
 		case CHECKBOX:	return new CheckBox;
 		case RADIOBOX:  return new RadioBox;
 		case SLIDER:    return new Slider;
+		case GRID_LAYOUT:return new GridLayout;
+			
 		default: 
 			error_log("Unable to create widget of type %u", type);
 		}

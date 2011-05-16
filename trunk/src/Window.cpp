@@ -64,24 +64,27 @@ namespace gui
 		}
 	}
 
-	void Window::SetPosFromDrag( Drag* drag )
+	bool Window::SetPosFromDrag( Drag* drag )
 	{
 		//don't move from dragging.. only move when the titlebar was moved!
+		return false;
 	}
 
-	void Window::HandleDragStop( Drag* drag )
+	bool Window::HandleDragStop( Drag* drag )
 	{
 		//basic widget drag-stop policy, other might do something different
-		if(!drag) return;
-		if(drag->GetStatus() != Drag::Finished) return;
+		if(!drag) return false;
+		if(drag->GetStatus() != Drag::Finished) return false;
 
 		Widget* target = drag->GetTarget();
 
 		//the titlebar movement is special.. don't count it
-		if(target->GetType() == TITLE_BAR) return;
+		if(target->GetType() == TITLE_BAR) return false;
 		
 		//if it's not the titlebar.. do the usual
 		Widget::HandleDragStop(drag);
+		
+		return true;
 	}
 
 	void Window::UpdateClipArea()

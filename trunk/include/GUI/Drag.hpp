@@ -44,6 +44,9 @@ namespace gui
 
 		const sf::Vector2f& GetStartPos() const;
 		const sf::Vector2f& GetCurrentPos() const;
+
+		sf::Vector2f GetCurrentMousePos() const;
+
 		void SetPos(const sf::Vector2f& pos);
 		void SetPos(int x, int y);
 

@@ -163,6 +163,10 @@ namespace gui {
 		_HandleEvents();
 
 		for(WidgetList::iterator i=m_widgets.begin(); i!= m_widgets.end(); i++) {
+			if(!i->second) {
+				error_log("Child widget is NULL!! CRASH ALERT!!");
+				continue;
+			}
 			if(i->second->IsDead()){ 
 				m_freeWidgets.push_back(i->second);
 			} else {
@@ -366,7 +370,15 @@ namespace gui {
 			Widget* widget = m_freeWidgets[i];
 			
 			WidgetList::iterator it = m_widgets.find(widget->GetId());
-			if(it != m_widgets.end()) {
+			if(it != m_widgets.end()) 
+			{
+				//if the dying widget contains the current focus.. null it!
+				if(widget->ContainsWidget(m_focus)) {
+					m_focus = NULL;
+				} 
+				if(widget->ContainsWidget(m_hoverTarget)) {
+					m_hoverTarget = NULL;
+				}
 				delete it->second;
 				m_widgets.erase(it);
 			}

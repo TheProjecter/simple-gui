@@ -247,7 +247,7 @@ namespace gui {
 	{
 		if(!child) return false;
 		if(FindChildByName(child->GetName())) {
-			debug_log("Couldn't add widget \"%s\" to widget: \"%s\"",m_name.c_str(),child->GetName().c_str());		
+			debug_log("Couldn't add widget \"%s\" to widget: \"%s\"",child->GetName().c_str(),m_name.c_str());		
 			return false;
 		}
 
@@ -359,15 +359,15 @@ namespace gui {
 	void Widget::Update( float diff )
 	{
 		if(m_dead) return;
-		
-		//handle the events..also takes care of child widget events
-		_HandleEvents();
 
 		//check if the current focus just died
 		if(m_focus && m_focus->m_dead) 
 			m_focus = NULL;
 		if(m_hoverTarget && m_hoverTarget->m_dead)
 			m_hoverTarget = NULL;
+
+		//handle the events..also takes care of child widget events
+		_HandleEvents();
 
 		for(WidgetList::iterator it=m_widgets.begin(); it!=m_widgets.end();it++) {
 			if(it->second->m_dead) {
@@ -380,6 +380,15 @@ namespace gui {
 			uint32 guid = m_freeWidgets[i]->GetId();
 			WidgetList::iterator it = m_widgets.find(guid);
 			if(it != m_widgets.end()) {
+				Widget* widget = it->second;
+
+				//if the dying widget contains the current focus.. null it!
+				if(widget->ContainsWidget(m_focus)) {
+					m_focus = NULL;
+				} 
+				if(widget->ContainsWidget(m_hoverTarget)) {
+					m_hoverTarget = NULL;
+				}
 				delete it->second;
 				m_widgets.erase(it);
 			} else {
@@ -1060,42 +1069,53 @@ namespace gui {
 		return new Drag(this,event);
 	}
 
-	void Widget::HandleDragMove( Drag* drag )
+	bool Widget::HandleDragMove( Drag* drag )
 	{
-		if(!drag) return;
-		if(drag->GetStatus() != Drag::Running) return;
+		if(!drag) return false;
+		if(drag->GetStatus() != Drag::Running) return false;
 
 		Widget* target = drag->GetTarget();
 		
 		//basic widget specific child-movement policy, 
 		//other widget might move child widgets differently
-		target->SetPosFromDrag(drag);
+		return target->SetPosFromDrag(drag);
 	}
 
-	void Widget::HandleDragDrop( Drag* drag )
+	bool Widget::HandleDragDrop( Drag* drag )
 	{
 		//basic widget specific receive drop policy
 		//only accept drops of type Widget
-		if(!drag) return;
+		if(!drag) return false;
 
 		//this should never happen, but check anyways
-		if(drag->GetType() != Drag::Widget) return;
+		if(drag->GetType() != Drag::Widget) return false;
 
 		//the default receive drop policy is to add the widget to this
 		AddWidgetForced(drag->GetTarget());
+
+		return true;
 	}
 
-	void Widget::HandleDragDraw( Drag* drag )
+	bool Widget::HandleDragDraw( Drag* drag )
 	{
 		//basic widget drag-drawing policy, by default it draws nothing 
 		//because it just moves the widget, so that'll act as the draw
+		
+		sf::String pos;
+		std::stringstream s;
+		s << "x: " << drag->GetCurrentPos().x << " |y: " << drag->GetCurrentPos().y;
+		pos.SetText(s.str());
+		pos.SetColor(sf::Color(255,0,0));
+		pos.SetPosition(drag->GetCurrentPos());
+		s_gui->GetWindow().Draw(pos);
+		return true;
 	}
 
-	void Widget::HandleDragStop( Drag* drag )
+	bool Widget::HandleDragStop( Drag* drag )
 	{
 		//basic widget drag-stop policy, other might do something different
-		if(!drag) return;
-		if(drag->GetStatus() != Drag::Finished) return;
+		if(!drag) return false;
+		if(drag->GetStatus() != Drag::Finished) return false;
 
 		Widget* target = drag->GetTarget();
 
@@ -1114,14 +1134,33 @@ namespace gui {
 					//it's inside another widget.. 
 					Widget* parent = drag->GetCurrentFocus();
 					//parent->AddWidget(target);
-					RemoveWidget(target);
-					parent->HandleDragDrop(drag);
+
+					//m_id of target will likely change if the drop is successful and the parent changes
+					uint32 old_id = drag->GetTarget()->GetId();
+					if(!parent->HandleDragDrop(drag)) {
+						//move to the original drag position.. since drag failed
+						drag->GetTarget()->SetPos(drag->GetStartPos(),true);
+					} else {
+
+						//remember the new id received
+						uint32 new_id = drag->GetTarget()->GetId();
+
+						//need this to be able to remove the widget from management
+						drag->GetTarget()->SetId(old_id);
+						RemoveWidget(target);
+
+						//restore the new id received
+						drag->GetTarget()->SetId(new_id);
+
+					}
+					return true;
 				}
 			}
 
 			//update position
 			target->SetPos(drag->GetCurrentPos(),drag->GetForcedMove());
 		}
+		return true;
 	}
 
 	Widget* Widget::GetWidgetAt( int x, int y ) const
@@ -1156,7 +1195,7 @@ namespace gui {
 		return v;
 	}
 
-	void Widget::SetPosFromDrag( Drag* drag )
+	bool Widget::SetPosFromDrag( Drag* drag )
 	{
 		Drag::DropFlags temp = m_dropFlags;
 			m_dropFlags = drag->GetDragFlags();
@@ -1166,6 +1205,8 @@ namespace gui {
 			m_mediator.PostEvent(new gui::OnDrag(this,drag));
 
 		m_dropFlags = temp;
+
+		return true;
 	}
 
 	Widget* Widget::QueryWidget( const std::string& path ) const
@@ -1189,17 +1230,17 @@ namespace gui {
 
 	bool Widget::IsDead() const
 	{
-		//recursively called up the hierarchy tree
-		if(GetParent() && GetParent()->IsDead()) {
-			return true;
-		}
-		//no more parents.. are you dead?
 		return m_dead;
 	}
 
 	void Widget::Kill()
 	{
 		m_dead = true;
+
+		//kill all contained widgets!
+		for(WidgetList::iterator it = m_widgets.begin(); it != m_widgets.end(); it++) {
+			it->second->Kill();
+		}
 	}
 
 	bool Widget::IsMovable() const
@@ -1331,5 +1372,23 @@ namespace gui {
 	const sf::Vector2i& Widget::GetSizeHint() const
 	{
 		return m_sizeHint;
+	}
+
+	//checks whether a widget contains the other.. self included
+	bool Widget::ContainsWidget( Widget* widget )
+	{
+		if(this == widget) return true;
+
+		for(WidgetList::iterator it = m_widgets.begin(); 
+			it != m_widgets.end(); it++) 
+		{
+			if(widget == it->second) {	//if your child is the wanted one.. you contain it!
+				return true;
+			} else if(it->second->ContainsWidget(widget)) { //else if your child contains it.. you contain it as well!
+				return true;
+			}
+		}
+
+		return false; //you don't have it...
 	}
 }

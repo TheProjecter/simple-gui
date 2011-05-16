@@ -25,6 +25,9 @@ namespace gui
 			{
 				switch(GetTagLocation())
 				{
+				//TODO: Fix widget compiling to fix cyclical dependencies and 
+				//widget-order(widget hasn't been added to gui yet but you request a connection)
+				//dependencies from not getting compiled
 				case None:
 					//case </widget> closing a widget.. so pop & compile it
 					if(m_widgetInfos.size() && !m_loadLayout) {
@@ -89,7 +92,8 @@ namespace gui
 			{
 				Widget* temp = NULL;
 				//it's a create widget xml syntax! 
-				std::string widgetName; int widgetType = WIDGET;
+				std::string widgetName; 
+				int widgetType = WIDGET;
 				while (pAttrib)
 				{
 					if(strcmp(pAttrib->Name(),"name") == 0)

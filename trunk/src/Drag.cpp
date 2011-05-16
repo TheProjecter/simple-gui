@@ -158,4 +158,13 @@ namespace gui
 	{
 		m_forceDragFlags = val;
 	}
+
+	sf::Vector2f Drag::GetCurrentMousePos() const
+	{
+		sf::Vector2f temp;
+		temp.x = m_curPos.x + m_hotSpot.x;
+		temp.y = m_curPos.y + m_hotSpot.y;
+		
+		return temp;
+	}
 }
