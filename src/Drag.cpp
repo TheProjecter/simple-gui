@@ -167,4 +167,11 @@ namespace gui
 		
 		return temp;
 	}
+
+	void Drag::ResetPosition()
+	{
+		assert(m_target);
+
+		m_target->SetPos(m_startPos,true);
+	}
 }

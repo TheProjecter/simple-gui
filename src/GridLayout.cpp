@@ -35,6 +35,8 @@ namespace gui
 		m_items[line][column].SetWidget(widget);	
 		
 
+		//adding widgets can also lead to useless redundant rows/columns!
+		RemoveEmptyColumnAndLines();	
 		ComputeCells(); //recalculate cells
 		return true;
 	}
@@ -48,7 +50,8 @@ namespace gui
 		Widget* widget = layout_item.GetWidget();
 		RemoveWidget(widget);
 
-		m_items[line].erase(m_items[line].begin()+column);
+		//resize the grid if there are empty useless spaces
+		RemoveEmptyColumnAndLines();
 
 		ComputeCells();
 		return widget;
@@ -106,6 +109,8 @@ namespace gui
 
 				if(collision) break;	//else it may crash because we might have changed indexes when adding a widget
 			}
+			
+			if(collision) break;	//else it may crash because we might have changed indexes when adding a widget
 		}
 		if(collision) {
 			error_log("Collision at grid location: %u:%u", cellRow, cellCol);
@@ -365,7 +370,7 @@ namespace gui
 				uint32 height = 0;
 
 				//make sure you have the correct height for row-spanned items
-				for(uint32 k=j; k<j+rowspan; k++) {
+				for(uint32 k=i; k<i+rowspan; k++) {
 					height += rowsInfo[k].first;
 				}
 				//check if the cell is an outer-cell(extremity)
@@ -573,6 +578,9 @@ namespace gui
 		}
 		//now remove widget from grid
 		RemoveWidgetFromGrid(widget);
+
+		//fix redundant rows/cols
+		RemoveEmptyColumnAndLines();
 		
 		return true;	//what if something went wrong?..
 
@@ -582,29 +590,29 @@ namespace gui
 	{
 		if(!widget) return;
 
-		for(uint32 i=0; i<m_items.size(); i++) {
-			for(uint32 j=0; j<m_items[i].size(); j++) {
-				LayoutItem& layout_item = m_items[i][j];
-				
-				//found the cell of the widget
-				if(widget == layout_item.GetWidget()) {
-					//if the cell spanned over more than one column.. update that
-					if(layout_item.GetRowSpan() > 1) {
-						for(uint32 k=i+1; k<i+layout_item.GetRowSpan(); k++) {
-							m_items[k][j].SetExpand(false);
-						}
-					}
-					if(layout_item.GetColSpan() > 1) {
-						for(uint32 k=j+1; k<j+layout_item.GetColSpan(); k++) {
-							m_items[i][k].SetExpand(false);
-						}
-					}
-					layout_item.SetWidget(NULL);
+		uint32 line = 0;
+		uint32 column = 0;
 
-					break;	//found the item...should only be one!
-				}
-			}
+		if(!FindWidgetInGrid(widget,line,column)) {
+			return;
 		}
+
+		LayoutItem& layout_item = m_items[line][column];
+
+		//update every line we *own* to notify they're no longer occupied
+		for(uint32 k=line+1; k<line+layout_item.GetRowSpan(); k++) {
+			m_items[k][column].SetExpand(false);
+		}
+
+		//update every column we *own* to notify they're no longer occupied
+		for(uint32 k=column+1; k<column+layout_item.GetColSpan(); k++) {
+			m_items[line][k].SetExpand(false);
+		}
+
+		layout_item.SetWidget(NULL);
+		//RemoveEmptyColumnAndLines();
+		
+		//ComputeCells();	//don't compute? will be handled somewhere else.. you just worry about the grid!
 	}
 
 	void GridLayout::ReloadSettings()
@@ -633,6 +641,220 @@ namespace gui
 		SetPosForGrid();
 	}
 
+	bool GridLayout::IsLineEmpty(uint32 line) const
+	{
+		if(line > m_items.size()) {
+			error_log("Line is outside grid bounds! %u", line);
+			return false;
+		}
+		for(uint32 j=0; j<m_items[line].size(); j++) {
+			if(!m_items[line][j].empty()) {
+				return false;
+			}
+		}
+
+		return true;	
+	}
+
+	bool GridLayout::IsColumnEmpty( uint32 column ) const
+	{
+		if(!m_items.size()) {
+			error_log("Grid is empty!");
+			return false;
+		}
+
+		//assume grid has the same number of columns.. otherwise it may crash!
+		if(column > m_items[0].size()) {
+			error_log("Column is outside grid bounds! %u", column);
+			return false;
+		}
+
+		for(uint32 i=0; i<m_items.size(); i++) {
+			if(!m_items[i][column].empty()) {
+				return false;
+			}
+		}
+
+		return true;	
+	}
+
+	bool GridLayout::RemoveLineIfEmpty( uint32 line )
+	{
+		if(!IsLineEmpty(line)) 
+			return false;
+
+		//don't delete anything if the grid is smaller than 2x2
+		if(m_items.size() <= 2) 
+			return false;
+
+		//remove the line!
+		m_items.erase(m_items.begin()+line);
+
+
+		ComputeCells();	//needs a recompute!
+		return true;
+	}
+
+	bool GridLayout::RemoveColumnIfEmpty( uint32 column )
+	{
+		if(!IsColumnEmpty(column)) 
+			return false;
+
+		//don't delete anything if the grid is smaller than 2x2
+		if(m_items[0].size() <= 2) 
+			return false;
+
+		//remove the column
+		for(uint32 i=0; i<m_items.size(); i++) {
+			m_items[i].erase(m_items[i].begin()+column);
+		}
+
+		ComputeCells();	//needs a recompute!
+		return true;
+	}
+
+	void GridLayout::RemoveEmptyColumnAndLines()
+	{
+		for(uint32 i=0; i<m_items.size(); i++) {
+			
+			if(RemoveLineIfEmpty(i)) {
+				i = 0;
+				continue;
+			}
+			for(uint32 j=0; j<m_items[i].size(); j++) {
+				if(RemoveColumnIfEmpty(j)) {
+					j = 0;	//go back to the start to avoid crash
+				}
+			}
+
+		}
+	}
+
+	bool GridLayout::HandleDragStop( Drag* drag )
+	{
+		if(!drag || drag->GetType() != Drag::Widget) 
+			return false;
+
+
+		//if you're not the target where the drop will happen.. then the 
+		//widget specific function can take care of the drop
+		if(drag->GetCurrentFocus() != this) {
+			return Widget::HandleDragStop(drag);
+		}
+
+		//if you're still the target of the drop.. you need to handle it 
+		//differently than the basic widget, because you need to change
+		//it's location in the grid!
+
+		uint32 line = 0;
+		uint32 column = 0;
+		if(!FindWidgetInGrid(drag->GetTarget(), line, column)) {
+			error_log("GridLayout initiated drag for(%s), but doesn't contain it in the grid!", drag->GetTarget()->GetName().c_str());
+			//add the widget in it's new location?
+			if(!FindGridLocationAt((uint32)drag->GetCurrentMousePos().x, (uint32)drag->GetCurrentMousePos().y, line, column)) {
+				error_log("Couldn't add widget to grid! Invalid coords(not inside the grid!)x: %u|y: %u",drag->GetCurrentMousePos().x, drag->GetCurrentMousePos().y);
+				drag->ResetPosition();
+				return false;
+			} 
+			LayoutItem& layout_item = m_items[line][column];
+			if(!layout_item.empty() || layout_item.IsExpand()) {
+				error_log("Tried to add widget(%s) to grid(%u,%u).. but it was occupied!",drag->GetTarget()->GetName().c_str(),line,column);			
+				drag->ResetPosition();
+				return false;
+			}
+			layout_item.SetWidget(drag->GetTarget());
+			return true;
+		}
+		uint32 old_widget_line = line;
+		uint32 old_widget_col  = column;
+
+		//find it's new location in the grid
+		if(!FindGridLocationAt((uint32)drag->GetCurrentMousePos().x, (uint32)drag->GetCurrentMousePos().y, line, column)) {
+			error_log("Couldn't add widget to grid! Invalid coords(not inside the grid!)x: %u|y: %u",drag->GetCurrentMousePos().x, drag->GetCurrentMousePos().y);
+			drag->ResetPosition();
+			return false;
+		} 
+
+		LayoutItem& layout_item = m_items[line][column];
+
+		if(!layout_item.empty() || layout_item.IsExpand()) {
+			error_log("Tried to add widget(%s) to grid(%u,%u).. but it was occupied!",drag->GetTarget()->GetName().c_str(),line,column);			
+			drag->ResetPosition();
+			return false;
+		}
+
+		//remove it after you have some valid coords in the grid
+		RemoveWidgetFromGrid(drag->GetTarget());	
+		
+		layout_item.SetWidget(drag->GetTarget());		
+
+		//now you can remove the extra *if any* rows and/or columns
+		RemoveEmptyColumnAndLines();
+		
+		ComputeCells(); //recompute? I'm pretty sure it's needed
+	}
+
+	bool GridLayout::FindWidgetInGrid( Widget* widget, uint32& line, uint32& column )
+	{
+		//to avoid saying we found it in empty grids..
+		if(!widget) return false;	
+
+		for(uint32 i=0; i<m_items.size(); i++) {
+			for(uint32 j=0; j<m_items[i].size(); j++) {
+
+				LayoutItem& layout_item = m_items[i][j];
+
+				//found the cell of the widget
+				if(widget == layout_item.GetWidget()) {
+					line = i;
+					column = j;
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	LayoutItem::CollisionType GridLayout::FindGridLocationAt( int32 xpos, int32 ypos, uint32& line, uint32& column )
+	{
+
+		bool collision = false;
+		LayoutItem::CollisionType type = LayoutItem::NoCollision;
+		uint32 cellRow = 0;
+		uint32 cellCol = 0;
+
+		//calculate in which cell to drop the widget
+		for(uint32 i=0; i<m_items.size(); i++) {
+			for(uint32 j=0; j<m_items[i].size(); j++) {
+				LayoutItem& layout_item = m_items[i][j];
+
+				switch(type = layout_item.IsCollision(xpos,ypos,m_panning)) {
+					case LayoutItem::NoCollision: break;
+					
+					default:
+
+						collision = true;
+						cellRow = i;
+						cellCol = j;
+						break;
+				}
+
+				if(collision) break;	//else it may crash because we might have changed indexes when adding a widget
+			}
+
+			if(collision) break;	//else it may crash because we might have changed indexes when adding a widget
+		}
+		if(collision) {
+			line = cellRow;
+			column = cellCol;
+
+			return type;
+		}
+
+		return type;	//shouldn't ever happen...
+	}
+
 	void LayoutItem::SetWidget( Widget* widget )
 	{
 		m_widget = widget;
@@ -647,15 +869,19 @@ namespace gui
 	{
 		return m_widget;
 	}
-
-	LayoutItem::CollisionType LayoutItem::IsCollision( int x, int y, uint32 panning ) const
+	//panning doesn't really do anything right now.. use be used for checking collision
+	LayoutItem::CollisionType LayoutItem::IsCollision( int x, int y, uint32 panning ) const 
 	{
 		Rect temp(x,y,1,1);
 		if(!gui::IsCollision(temp,m_rect)) {
 			return LayoutItem::NoCollision;
 		}
 
-		Rect proper = m_rect - panning;	
+		Rect proper = m_rect;
+		proper.x += uint32(m_rect.w * 0.1f);		//10% of size reserved
+		proper.w -= uint32(2*m_rect.w * 0.1f);
+		proper.y += uint32(m_rect.h * 0.1f);
+		proper.h -= uint32(2*m_rect.h * 0.1f);
 
 		if(gui::IsCollision(temp,proper)) {
 			return LayoutItem::ProperCollision;
@@ -677,7 +903,7 @@ namespace gui
 			return LayoutItem::LeftCollision;
 
 		//right collision
-		if(x < proper.x + proper.w)
+		if(x > proper.x + proper.w)
 			return LayoutItem::RightCollision;
 
 		return LayoutItem::NoCollision;	//this should never happen
@@ -720,10 +946,32 @@ namespace gui
 		if(!m_widget) return;
 
 		Rect temp = m_rect;
+		Rect rect = m_widget->GetRect();
 		temp -= panning;
 		
+		//resize the widget based on it's size policy
+		switch (m_widget->GetHorizontalPolicy())
+		{
+		case Widget::MinimumExpand:
+		case Widget::MaximumExpand:
+
+			switch (m_widget->GetVerticalPolicy())
+			{
+			case Widget::MinimumExpand:
+			case Widget::MaximumExpand:
+				m_widget->Resize(temp.w, temp.h);
+
+			}
+
+			break;
+		case Widget::Default:
+			//get default behavior for that widget type.. if any?
+			break;
+		default: break;
+		}
+
+		//debug
 		m_widget->Resize(temp.w, temp.h);
-		m_widget->SetPos(temp.x, temp.y,true);
 	}
 
 	bool LayoutItem::IsExpand() const
@@ -774,9 +1022,19 @@ namespace gui
 		if(!m_widget) return;
 
 		Rect temp = m_rect;
+		Rect rect = m_widget->GetRect();
 		temp -= panning;
 
-		m_widget->SetPos(temp.x, temp.y,true);
+		uint32 xpos(0), ypos(0);
+
+		rect = m_widget->GetRect();
+
+		//center the widget rect
+		xpos = m_rect.x + m_rect.w/2 - rect.w/2;
+		ypos = m_rect.y + m_rect.h/2 - rect.h/2;
+
+		//set it's position based on it's size policy
+		m_widget->SetPos(xpos, ypos,true);
 
 	}
 }

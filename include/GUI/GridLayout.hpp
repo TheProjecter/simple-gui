@@ -78,6 +78,14 @@ namespace gui
 		void AddColumnBefore(uint32 column);
 		void AddColumnAfter(uint32 column);
 
+		bool RemoveLineIfEmpty(uint32 line);	//returns true if deleted the line
+		bool RemoveColumnIfEmpty(uint32 column);//returns true if deleted the col
+
+		void RemoveEmptyColumnAndLines();
+
+		bool IsLineEmpty(uint32 line) const;
+		bool IsColumnEmpty(uint32 column) const;
+
 		bool HandleDragDrop(Drag* drag);
 		
 		void SetPanning(uint32 panning);
@@ -92,6 +100,10 @@ namespace gui
 
 		void SetPos(int x, int y, bool forceMove /* = false */, bool save /* = true */);
 		void SetPosForGrid();
+		bool HandleDragStop(Drag* drag);
+
+		bool FindWidgetInGrid(Widget* widget, uint32& line, uint32& column);
+		LayoutItem::CollisionType FindGridLocationAt(int32 xpos, int32 ypos, uint32& line, uint32& column);
 
 		void ReloadSettings();
 		

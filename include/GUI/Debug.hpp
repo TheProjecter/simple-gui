@@ -36,9 +36,9 @@ namespace gui {
 	};
 
 	#define sLog Debug::getInstance()
-	#define debug_log sLog.outDebug("Debug: %s() said: ",__FUNCTION__);\
+	#define debug_log sLog.outDebug("Line: %u | Debug: %s() said: ",__LINE__,__FUNCTION__);\
 		sLog.outDebug
-	#define error_log sLog.outError("ERROR: %s() said: ", __FUNCTION__);\
+	#define error_log sLog.outError("Line: %u | ERROR: %s() said: ",__LINE__, __FUNCTION__);\
 		sLog.outError
 
 	#define UNIT_TEST UnitTest __unit_test__(__FUNCTION__);

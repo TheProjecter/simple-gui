@@ -225,7 +225,7 @@ namespace gui {
 		virtual bool HandleDragDraw(Drag* drag);	//will be called when the drag needs to be drawn
 		virtual bool HandleDragStop(Drag* drag);	//will be called when the drag ended
 		virtual bool HandleDragDrop(Drag* drag);	//will be called when you receive a drop
-		virtual bool SetPosFromDrag(Drag* drag);
+		virtual bool SetPosFromDrag(Drag* drag);	//will be called to set the position from dragging
 
 		bool ContainsWidget(Widget* widget);
 	private:
