@@ -36,7 +36,14 @@ void gui::TextArea::Draw() const
 gui::TextArea::TextArea(): m_viewableLines(1),m_totalLines(1),
 						   m_startingLine(0)
 {
-	
+
+	//buttons particular size hint
+	m_sizeHint.x = 320;
+	m_sizeHint.y = 240;
+
+	//buttons particular size policy
+	m_horizontalPolicy	= MaximumExpand;
+	m_verticalPolicy	= MaximumExpand;	
 }
 
 void gui::TextArea::Resize( int w, int h , bool save /*=true*/)

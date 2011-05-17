@@ -40,6 +40,14 @@ namespace gui
 	RadioBox::RadioBox() : m_checked(false)
 	{
 		m_type = RADIOBOX;
+
+		//buttons particular size hint
+		m_sizeHint.x = 75;
+		m_sizeHint.y = 25;
+
+		//buttons particular size policy
+		m_horizontalPolicy	= MinimumExpand;
+		m_verticalPolicy	= Fixed;	
 	}
 
 	bool RadioBox::IsChecked()

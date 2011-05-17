@@ -65,6 +65,15 @@ namespace gui {
 	Label::Label() : alignment(Center)
 	{
 		m_type = LABEL;
+
+
+		//buttons particular size hint
+		m_sizeHint.x = 75;
+		m_sizeHint.y = 25;
+
+		//buttons particular size policy
+		m_horizontalPolicy	= MinimumExpand;
+		m_verticalPolicy	= Fixed;	
 	}
 
 	void Label::SetAlignment( Alignment a )
