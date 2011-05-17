@@ -15,6 +15,16 @@ namespace gui
 		p1 = GetPos(); p2 = GetPos();
 		p2.y += m_rect.h;
 		m_cursor = sf::Shape::Line(p1,p2,3.f,sf::Color(0,0,0));
+
+
+
+		//buttons particular size hint
+		m_sizeHint.x = 75;
+		m_sizeHint.y = 25;
+
+		//buttons particular size policy
+		m_horizontalPolicy	= MaximumExpand;
+		m_verticalPolicy	= Fixed;	
 	}
 
 	void LineEdit::Draw() const

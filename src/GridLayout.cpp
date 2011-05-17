@@ -172,7 +172,7 @@ namespace gui
 					//don't worry about checking if it's already in maxcols.. if it is then mincols is redundant
 					// 
 					//add the columns to the min columns if it wasn't there already
-					if(std::find(mincols.begin(), mincols.end(), i) != mincols.end()) {
+					if(std::find(mincols.begin(), mincols.end(), i) == mincols.end()) {
 						mincols.push_back(i);	
 					}
 					//if column less than minimum or maximum, update
@@ -188,7 +188,7 @@ namespace gui
 
 						//don't worry about deleting the *maybe* existing entry from mincols.. 
 						//if there's a maxcols then mincols will be useless
-						if(std::find(maxcols.begin(), maxcols.end(), i)!= maxcols.end()) {
+						if(std::find(maxcols.begin(), maxcols.end(), i) == maxcols.end()) {
 							maxcols.push_back(i);	//this check may be useless.. since it should only happen once
 						}
 					}
@@ -276,7 +276,7 @@ namespace gui
 					//don't worry about checking if it's already in maxcols.. if it is then mincols is redundant
 					// 
 					//add the columns to the min rows if it wasn't there already
-					if(std::find(minrows.begin(), minrows.end(), i) != minrows.end()) {
+					if(std::find(minrows.begin(), minrows.end(), i) == minrows.end()) {
 						mincols.push_back(i);	
 					}
 					//if column less than minimum or maximum, update
@@ -292,7 +292,7 @@ namespace gui
 
 						//don't worry about deleting the *maybe* existing entry from minrows.. 
 						//if there's a maxcols then minrows will be useless
-						if(std::find(maxrows.begin(), maxrows.end(), i)!= maxrows.end()) {
+						if(std::find(maxrows.begin(), maxrows.end(), i) == maxrows.end()) {
 							maxrows.push_back(i);	//this check may be useless.. since it should only happen once
 						}
 					}
@@ -792,6 +792,8 @@ namespace gui
 		RemoveEmptyColumnAndLines();
 		
 		ComputeCells(); //recompute? I'm pretty sure it's needed
+
+		return true;
 	}
 
 	bool GridLayout::FindWidgetInGrid( Widget* widget, uint32& line, uint32& column )
@@ -960,18 +962,28 @@ namespace gui
 			case Widget::MinimumExpand:
 			case Widget::MaximumExpand:
 				m_widget->Resize(temp.w, temp.h);
-
+			default: 
+				m_widget->Resize(temp.w, rect.h);
 			}
 
 			break;
 		case Widget::Default:
 			//get default behavior for that widget type.. if any?
 			break;
-		default: break;
+		default: 
+			switch (m_widget->GetVerticalPolicy())
+			{
+			case Widget::MinimumExpand:
+			case Widget::MaximumExpand:
+				m_widget->Resize(rect.w, temp.h);
+			default: 
+				m_widget->Resize(rect.w, rect.h);
+			}
+			break;
 		}
 
 		//debug
-		m_widget->Resize(temp.w, temp.h);
+		//m_widget->Resize(temp.w, temp.h);
 	}
 
 	bool LayoutItem::IsExpand() const

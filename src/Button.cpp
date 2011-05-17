@@ -63,6 +63,14 @@ namespace gui
 		m_text.SetSize(16); 
 		m_movable = false; 
 		m_type = BUTTON;
+
+		//buttons particular size hint
+		m_sizeHint.x = 75;
+		m_sizeHint.y = 25;
+
+		//buttons particular size policy
+		m_horizontalPolicy	= MinimumExpand;
+		m_verticalPolicy	= Fixed;	
 	}
 
 	void Button::SetPos( int x, int y, bool forceMove, /*= false */

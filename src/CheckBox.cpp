@@ -5,6 +5,16 @@ namespace gui
 	CheckBox::CheckBox() : m_checked(false),m_uncheckedImage(NULL)
 	{
 		m_type = CHECKBOX;
+
+
+
+		//buttons particular size hint
+		m_sizeHint.x = 75;
+		m_sizeHint.y = 25;
+
+		//buttons particular size policy
+		m_horizontalPolicy	= MinimumExpand;
+		m_verticalPolicy	= Fixed;	
 	}
 
 	bool CheckBox::IsChecked() const

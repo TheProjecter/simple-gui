@@ -26,6 +26,15 @@ namespace gui {
 		if(s_gui->GetTheme() && s_gui->GetTheme()->HasProperty("widget_background_color"))
 			m_shape.SetColor(s_gui->GetTheme()->GetColor("widget_background_color"));
 		else m_shape.SetColor(sf::Color(241,213,231));
+
+
+		//buttons particular size hint
+		m_sizeHint.x = 400;
+		m_sizeHint.y = 300;
+
+		//buttons particular size policy
+		m_horizontalPolicy	= Fixed;
+		m_verticalPolicy	= Fixed;	
 	}
 
 	Widget::Widget( const std::string& name ): index(0), m_parent(0), 
@@ -44,6 +53,14 @@ namespace gui {
 		if(s_gui->GetTheme() && s_gui->GetTheme()->HasProperty("widget_background_color"))
 			m_shape.SetColor(s_gui->GetTheme()->GetColor("widget_background_color"));
 		else m_shape.SetColor(sf::Color(241,213,231));
+
+		//buttons particular size hint
+		m_sizeHint.x = 400;
+		m_sizeHint.y = 300;
+
+		//buttons particular size policy
+		m_horizontalPolicy	= Fixed;
+		m_verticalPolicy	= Fixed;	
 	}
 	Widget::~Widget()
 	{
