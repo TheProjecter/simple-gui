@@ -739,7 +739,24 @@ namespace gui
 		//if you're not the target where the drop will happen.. then the 
 		//widget specific function can take care of the drop
 		if(drag->GetCurrentFocus() != this) {
-			return Widget::HandleDragStop(drag);
+			if(Widget::HandleDragStop(drag)) {
+				//now that the widget is no longer managed by the grid.. 
+				// return to your default size
+				uint32 width = drag->GetTarget()->GetSizeHint().x;
+				uint32 height = drag->GetTarget()->GetSizeHint().y;
+				drag->GetTarget()->Resize(width, height);
+
+				//now you can remove the extra *if any* rows and/or columns
+				RemoveEmptyColumnAndLines();
+
+				ComputeCells(); //recompute? I'm pretty sure it's needed
+
+				return true;
+			} else {
+				drag->ResetPosition();			
+				return false;
+			}
+			
 		}
 
 		//if you're still the target of the drop.. you need to handle it 
