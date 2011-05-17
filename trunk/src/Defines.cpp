@@ -122,7 +122,7 @@ namespace gui {
 
 	const Rect Rect::operator+( int panning ) const
 	{
-		return Rect(x-panning,y-panning,w+panning,h+panning);
+		return Rect(x-panning,y-panning,w+panning*2,h+panning*2);
 	}
 	Rect& Rect::operator+=( const Rect& other )
 	{
@@ -168,20 +168,20 @@ namespace gui {
 
 	const Rect Rect::operator-( int panning ) const
 	{
-		return Rect(x+panning, y+panning,w-panning,h-panning);
+		return Rect(x+panning, y+panning,w-panning*2,h-panning*2);
 	}
 
 	Rect& Rect::operator-=( int panning )
 	{
 		x += panning; y += panning;
-		w -= panning; h -= panning;
+		w -= panning*2; h -= panning*2;
 		return *this;
 	}
 
 	Rect& Rect::operator+=( int panning )
 	{
 		x -= panning; y -= panning;
-		w += panning; h += panning;
+		w += panning*2; h += panning*2;
 		return *this;
 	}
 
