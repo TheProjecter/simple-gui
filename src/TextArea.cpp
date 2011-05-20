@@ -42,6 +42,8 @@ gui::TextArea::TextArea(): m_viewableLines(1),m_totalLines(1),
 	m_sizeHint.x = 320;
 	m_sizeHint.y = 240;
 
+	m_type = TEXT_AREA;
+
 	//buttons particular size policy
 	m_horizontalPolicy	= MaximumExpand;
 	m_verticalPolicy	= MaximumExpand;	
@@ -68,6 +70,13 @@ void gui::TextArea::SetPos( int x, int y, bool forceMove, /* = false */
 		}
 		m_lines[i].SetPos(m_rect,line_spacing);
 	}
+}
+
+void gui::TextArea::InitGraphics()
+{	
+	//DEBUG!!: hardcoded value!
+	m_shape.SetColor(sf::Color(255,255,255));
+
 }
 
 inline float char_width(char* c, const sf::Font& font)

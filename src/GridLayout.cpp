@@ -7,12 +7,12 @@ namespace gui
 	GridLayout::GridLayout()
 	{
 		m_type = GRID_LAYOUT;
-		m_panning = 5;		//by default 2 pixels panning
+		m_panning = 5;		//by default 5 pixels panning
 
-		//resize to a 2 by 2 grid
-		m_items.resize(2);
+		//resize to a 1 by 1 grid
+		m_items.resize(1);
 		for(uint32 i=0; i<m_items.size(); i++) {
-			m_items[i].resize(2);
+			m_items[i].resize(1);
 		}
 
 		ComputeCells();
@@ -224,7 +224,7 @@ namespace gui
 		//if the column's width is bigger than the rect.. must resize the columns
 		if(diff < 0) {
 			diff += panWidth;	//the columns should be as wide as the widget.. 
-			float coeff = m_rect.w / (float) columnWidth;	//resize all columns by coeff to fit my size
+			float coeff = m_rect.w / (float) (columnWidth);	//resize all columns by coeff to fit my size
 
 			for(uint32 i=0; i<columnsInfo.size(); i++) {
 				columnsInfo[i].first = uint32(columnsInfo[i].first * coeff);
@@ -327,7 +327,7 @@ namespace gui
 		//if the column's width is bigger than the rect.. must resize the columns
 		if(diff < 0) {
 			diff += panHeight;	//the columns should be as wide as the widget.. 
-			float coeff = m_rect.w / (float) rowHeight;	//resize all columns by coeff to fit my size
+			float coeff = m_rect.h / (float) (rowHeight);	//resize all columns by coeff to fit my size
 
 			for(uint32 i=0; i<rowsInfo.size(); i++) {
 				rowsInfo[i].first = uint32(rowsInfo[i].first * coeff);
@@ -367,16 +367,20 @@ namespace gui
 				uint32 colspan = layout_item.GetColSpan();
 
 				uint32 width  = 0;	//start from 0, since rowspan will be 1 by default.. so the width will be added
+				uint32 widthSpan = 0;
 
+				width += columnsInfo[j].first;
 				//make sure you have the correct width for row-spanned items
 				for(uint32 k=j; k<j+colspan; k++) {
-					width += columnsInfo[k].first;
+					widthSpan += columnsInfo[k].first;
 				}
 				uint32 height = 0;
+				uint32 heightSpan = 0;
 
+				height += rowsInfo[i].first;
 				//make sure you have the correct height for row-spanned items
 				for(uint32 k=i; k<i+rowspan; k++) {
-					height += rowsInfo[k].first;
+					heightSpan += rowsInfo[k].first;
 				}
 				//check if the cell is an outer-cell(extremity)
 				bool extremity = false;
@@ -386,9 +390,10 @@ namespace gui
 					extremity = true;
 				}
 
-				layout_item.SetSize(width,height,extremity);
+				layout_item.SetSize(widthSpan,heightSpan,extremity);
 				layout_item.SetPos(xpos,ypos);
 
+				//if it span over multiple columns..move by width.
 				xpos += width;	//go to the next item
 
 
@@ -416,8 +421,32 @@ namespace gui
 				layout_item.SetPos(xpos,ypos);
 				xpos += layout_item.GetRect().w;
 
+				//take in account for multiple columns expanded cells
+				if(layout_item.GetColSpan() > 1) {
+					uint32 extra_width = 0;
+					for(uint32 k=j+1; k<j+layout_item.GetColSpan(); k++) {
+						LayoutItem& cell = m_items[i][k];
+						extra_width += cell.GetRect().w;
+					}
+					xpos -= extra_width;
+				}
+
+
+
 				layout_item.UpdateWidgetPos(m_panning);
 			}
+			LayoutItem& layout_item = m_items[i][0];
+
+			//take in account for multiple columns expanded cells
+			if(layout_item.GetRowSpan() > 1) {
+				uint32 extra_height = 0;
+				for(uint32 k=i+1; k<i+layout_item.GetRowSpan(); k++) {
+					LayoutItem& cell = m_items[k][0];
+					extra_height += cell.GetRect().h;
+				}
+				ypos -= extra_height;
+			}
+
 			ypos += m_items[i][0].GetRect().h;
 		}
 
@@ -535,6 +564,18 @@ namespace gui
 		m_items[cellRow][cellCol].SetRowSpan(rowSpan);
 		m_items[cellRow][cellCol].SetColSpan(colSpan);
 
+		
+		for(uint32 i=cellRow+1; i<cellRow+rowSpan; i++) {
+			for(uint32 j=cellCol+1; j<cellCol+colSpan; j++) {
+				m_items[i][j].SetExpand(true);
+			}
+			m_items[i][cellCol].SetExpand(true);
+		}
+
+		for(uint32 j=cellCol+1; j<cellCol+colSpan; j++) {
+			m_items[cellRow][j].SetExpand(true);
+		}
+
 		return true;
 	}
 
@@ -624,6 +665,9 @@ namespace gui
 		}
 
 		layout_item.SetWidget(NULL);
+		
+		layout_item.SetColSpan(1);
+		layout_item.SetRowSpan(1);
 		//RemoveEmptyColumnAndLines();
 		
 		//ComputeCells();	//don't compute? will be handled somewhere else.. you just worry about the grid!
@@ -662,7 +706,8 @@ namespace gui
 			return false;
 		}
 		for(uint32 j=0; j<m_items[line].size(); j++) {
-			if(!m_items[line][j].empty()) {
+			//cell doesn't contain a widget, and is not an extend of anothers
+			if(!m_items[line][j].empty() || m_items[line][j].IsExpand()) {
 				return false;
 			}
 		}
@@ -684,7 +729,7 @@ namespace gui
 		}
 
 		for(uint32 i=0; i<m_items.size(); i++) {
-			if(!m_items[i][column].empty()) {
+			if(!m_items[i][column].empty() || m_items[i][column].IsExpand()) {
 				return false;
 			}
 		}
@@ -697,8 +742,20 @@ namespace gui
 		if(!IsLineEmpty(line)) 
 			return false;
 
-		//don't delete anything if the grid is smaller than 2x2
-		if(m_items.size() <= 2) 
+		//don't delete anything if the grid if the size specified
+		//in the settings.. would cause crashes!
+		if(m_settings.HasStringValue("grid-properties") && IsLoading()) {
+			std::string temp = m_settings.GetStringValue("grid-properties");
+			std::stringstream s(temp);
+			uint32 rows(0), cols(0);
+			s >> rows >> cols;
+			if(m_items.size() <= rows) {
+				return false;
+			}
+		}
+
+		//don't delete anything if the grid is smaller than 1x1
+		if(m_items.size() <= 1) 
 			return false;
 
 		//remove the line!
@@ -714,9 +771,22 @@ namespace gui
 		if(!IsColumnEmpty(column)) 
 			return false;
 
-		//don't delete anything if the grid is smaller than 2x2
-		if(m_items[0].size() <= 2) 
+		//don't delete anything if the grid if the size specified
+		//in the settings.. would cause crashes!
+		if(m_settings.HasStringValue("grid-properties") && IsLoading()) {
+			std::string temp = m_settings.GetStringValue("grid-properties");
+			std::stringstream s(temp);
+			uint32 rows(0), cols(0);
+			s >> rows >> cols;
+			if(m_items[0].size() <= cols) {
+				return false;
+			}
+		}
+
+		//don't delete anything if the grid is smaller than 1x1
+		if(m_items[0].size() <= 1) 
 			return false;
+
 
 		//remove the column
 		for(uint32 i=0; i<m_items.size(); i++) {
@@ -758,7 +828,14 @@ namespace gui
 				// return to your default size
 				uint32 width = drag->GetTarget()->GetSizeHint().x;
 				uint32 height = drag->GetTarget()->GetSizeHint().y;
-				drag->GetTarget()->Resize(width, height);
+
+				//otherwise .. it will reset the size of the widget..
+				//after it was already calculated...
+				if(drag->GetTarget()->GetParent() && 
+				   drag->GetTarget()->GetParent()->GetType() != GRID_LAYOUT)
+				{
+					drag->GetTarget()->Resize(width, height);
+				}
 
 				//now you can remove the extra *if any* rows and/or columns
 				RemoveEmptyColumnAndLines();
@@ -979,7 +1056,7 @@ namespace gui
 		if(!m_widget) return;
 
 		Rect temp = m_rect;
-		Rect rect = m_widget->GetRect();
+		const sf::Vector2i& sizeHint = m_widget->GetSizeHint();
 		temp -= panning;
 		
 		//resize the widget based on it's size policy
@@ -993,8 +1070,17 @@ namespace gui
 			case Widget::MinimumExpand:
 			case Widget::MaximumExpand:
 				m_widget->Resize(temp.w, temp.h);
+				break;
+			case Widget::Default:
+				//get the default behavior for that widget type!
 			default: 
-				m_widget->Resize(temp.w, rect.h);
+				//if the grid decided it can't give you the min required.. resize
+				if(temp.h < sizeHint.y) {
+					m_widget->Resize(temp.w, temp.h);
+				} else { //you have enough space.. get the amount you want
+					m_widget->Resize(temp.w, sizeHint.y);
+				}
+				break;
 			}
 
 			break;
@@ -1006,9 +1092,27 @@ namespace gui
 			{
 			case Widget::MinimumExpand:
 			case Widget::MaximumExpand:
-				m_widget->Resize(rect.w, temp.h);
+				//if the grid decided it can't give you the min required.. resize
+				if(temp.w < sizeHint.x) {
+					m_widget->Resize(temp.w, temp.h);
+				} else { //you have enough space.. get the amount you want
+					m_widget->Resize(sizeHint.x, temp.h);
+				}
+				break;
 			default: 
-				m_widget->Resize(rect.w, rect.h);
+				//if the grid decided it can't give you the min required.. resize
+				if(temp.h < sizeHint.y) 
+				{
+					if(temp.w < sizeHint.x)
+						m_widget->Resize(temp.w, temp.h);
+					else m_widget->Resize(sizeHint.x,temp.h);
+
+				} else { //you have enough space.. get the amount you want
+					if(temp.w < sizeHint.x)
+						m_widget->Resize(temp.w, sizeHint.y);
+					else m_widget->Resize(sizeHint.x,sizeHint.y);
+				}
+				break;
 			}
 			break;
 		}
@@ -1057,6 +1161,9 @@ namespace gui
 
 	void LayoutItem::Draw( sf::RenderWindow& window ) const
 	{
+		if(m_expanded) 
+			return;
+
 		window.Draw(m_shape);
 	}
 

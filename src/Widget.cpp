@@ -18,7 +18,7 @@ namespace gui {
 					m_individualTheme(false), m_hovering(false),
 					m_hoverTarget(NULL), m_solid(false), m_allowSave(true),
 					m_sprite(NULL),m_dropFlags(Drag::WidgetOnly),
-					m_dead(false)
+					m_dead(false),m_loading(false)
 	{
 		m_mediator.SetCurrentPath(m_name);
 
@@ -44,7 +44,7 @@ namespace gui {
 		m_isFocus(true),m_transparency(200), m_individualTheme(false),
 		m_hovering(true),m_hoverTarget(NULL), m_solid(false), 
 		m_allowSave(true), m_sprite(NULL),m_dropFlags(Drag::WidgetOnly),
-		m_dead(false)
+		m_dead(false),m_loading(false)
 	{
 		this->m_name = name;
 		m_mediator.SetCurrentPath(name);
@@ -1407,5 +1407,15 @@ namespace gui {
 		}
 
 		return false; //you don't have it...
+	}
+
+	void Widget::SetLoading( bool val )
+	{
+		m_loading = val;
+	}
+
+	bool Widget::IsLoading() const
+	{
+		return m_loading;
 	}
 }
