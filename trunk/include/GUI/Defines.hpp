@@ -22,6 +22,8 @@ namespace gui {
 		LINE_EDIT, 
 		CHECKBOX, 
 		RADIOBOX, 
+		TEXT_AREA,
+		WINDOW,
 		SLIDER,
 		TITLE_BAR,
 		GRID_LAYOUT,

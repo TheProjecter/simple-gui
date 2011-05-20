@@ -175,7 +175,7 @@ namespace gui
 			} break;
 			default: break;
 			} 
-		} else if(strcmp(element->Value(),"property") == 0) { //TODO: make settings loading here
+		} else if(strcmp(element->Value(),"property") == 0) { 
 			if(!m_loadLayout) {
 				if(!m_widgetInfos.size()) {
 					debug_log("Tried to load properties, but no widget was found!");

@@ -9,6 +9,7 @@
 void gui::TextArea::SetText( const std::string& text )
 {
 	m_text = text;
+	m_type = TEXT_AREA;
 	std::stringstream s;
 	s.str(text);
 	Parse(s,m_lines,m_rect);

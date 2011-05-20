@@ -7,10 +7,13 @@ namespace gui
 {
 	class OnResize;
 
-	TitleBar::TitleBar( const std::string& text, ButtonStyle buttonStyle)
+	TitleBar::TitleBar( const std::string& text )
 	{
 		//there can only be ONE titlebar per window, and this will be its name
 		m_name = "my_titlebar";
+		m_type = TITLE_BAR;
+
+		m_buttonStyle = DEFAULT;
 
 		//title-bars can't be moved!
 		m_movable = false;
@@ -22,7 +25,6 @@ namespace gui
 		m_allowSave = false;
 
 		m_titleText = text;
-		m_type = TITLE_BAR;
 
 		//the title bar will be solid. other widgets will collide and won't 
 		//be able to move the titlebar
@@ -32,49 +34,6 @@ namespace gui
 		m_titleVisibleText.SetSize(14);
 		m_titleVisibleText.SetText(m_titleText);
 		
-		//save the button style
-		m_buttonStyle = buttonStyle;
-
-		//create buttons.. image buttons
- 		if(buttonStyle & CLOSE) {
- 			Button* button = NULL;
-			button = new Button;
-			button->AllowSave(false);
-			button->SetName("close");
-			button->SetText("X");
-			button->Resize(15,15);
-			this->AddWidget(button);
- 		}
-		//create buttons.. image buttons
-		if(buttonStyle & CLOSE) {
-			Button* button = NULL;
-			button = new Button;
-			button->AllowSave(false);
-			button->SetName("min");
-			button->SetText("_");
-			button->Resize(15,15);
-			this->AddWidget(button);
-		}
-		//create buttons.. image buttons
-		if(buttonStyle & CLOSE) {
-			Button* button = NULL;
-			button = new Button;
-			button->AllowSave(false);
-			button->SetName("max");
-			button->SetText("[]");
-			button->Resize(15,15);
-			this->AddWidget(button);
-		}
-		//create buttons.. image buttons
-		if(buttonStyle & QUESTION) {
-			Button* button = NULL;
-			button = new Button;
-			button->AllowSave(false);
-			button->SetName("help");
-			button->SetText("?");
-			button->Resize(15,15);
-			this->AddWidget(button);
-		}
 
 		InitGraphics();
 	}
@@ -193,5 +152,59 @@ namespace gui
 		m_mediator.Connect(parent,"default",events::OnMove,false);
 
 		Resize(parent->GetRect().w,15);	//hardcoded value
+	}
+
+	void TitleBar::SetTitleName( const std::string& title )
+	{
+		m_titleText = title;
+		m_titleVisibleText.SetText(m_titleText);
+	}
+
+	void TitleBar::SetButtonStyle( ButtonStyle buttonStyle )
+	{
+
+		//save the button style
+		m_buttonStyle = buttonStyle;
+
+		//create buttons.. image buttons
+		if(buttonStyle & CLOSE) {
+			Button* button = NULL;
+			button = new Button;
+			button->AllowSave(false);
+			button->SetName("close");
+			button->SetText("X");
+			button->Resize(15,15);
+			this->AddWidget(button);
+		}
+		//create buttons.. image buttons
+		if(buttonStyle & MINIMIZE) {
+			Button* button = NULL;
+			button = new Button;
+			button->AllowSave(false);
+			button->SetName("min");
+			button->SetText("_");
+			button->Resize(15,15);
+			this->AddWidget(button);
+		}
+		//create buttons.. image buttons
+		if(buttonStyle & MAXIMIZE) {
+			Button* button = NULL;
+			button = new Button;
+			button->AllowSave(false);
+			button->SetName("max");
+			button->SetText("[]");
+			button->Resize(15,15);
+			this->AddWidget(button);
+		}
+		//create buttons.. image buttons
+		if(buttonStyle & QUESTION) {
+			Button* button = NULL;
+			button = new Button;
+			button->AllowSave(false);
+			button->SetName("help");
+			button->SetText("?");
+			button->Resize(15,15);
+			this->AddWidget(button);
+		}
 	}
 }

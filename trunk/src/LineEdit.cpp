@@ -11,6 +11,7 @@ namespace gui
 						m_cursorStartIndex(0),m_allowedChars(255),
 						m_cursorDiff(0), m_cursorShow(true),m_isPassword(false)
 	{
+		m_type = LINE_EDIT;
 		sf::Vector2f p1,p2;
 		p1 = GetPos(); p2 = GetPos();
 		p2.y += m_rect.h;

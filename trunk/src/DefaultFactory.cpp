@@ -8,6 +8,7 @@
 #include "../include/gui/Slider.hpp"
 #include "../include/gui/TextArea.hpp"
 #include "../include/gui/Widget.hpp"
+#include "../include/gui/Window.hpp"
 #include "../include/gui/GridLayout.hpp"
 
 namespace gui
@@ -30,6 +31,8 @@ namespace gui
 		case CHECKBOX:	return new CheckBox;
 		case RADIOBOX:  return new RadioBox;
 		case SLIDER:    return new Slider;
+		case TEXT_AREA:	return new TextArea;
+		case WINDOW:	return new Window("temp_name",TitleBar::DEFAULT);
 		case GRID_LAYOUT:return new GridLayout;
 			
 		default: 

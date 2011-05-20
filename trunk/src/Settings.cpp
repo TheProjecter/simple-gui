@@ -158,7 +158,7 @@ namespace gui {
 					}
 					m_uint32Values[valueId] = (uint32)value;
 				} else if(propertyType == "string") {
-					std::string valueId; std::string value = 0;
+					std::string valueId; std::string value = "";
 					while (pAttrib) 
 					{
 						if(strcmp(pAttrib->Name(),"id") == 0)
