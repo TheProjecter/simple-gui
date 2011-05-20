@@ -31,12 +31,17 @@ namespace gui
 			return false;
 		}
 
-		Widget::AddWidgetForced(widget);
+		//Widget::AddWidgetForced(widget);
+		
+		if(!Widget::AddWidget(widget)) 
+			return false;
+
 		m_items[line][column].SetWidget(widget);	
 		
 
 		//adding widgets can also lead to useless redundant rows/columns!
 		RemoveEmptyColumnAndLines();	
+		SaveGridProperties();
 		ComputeCells(); //recalculate cells
 		return true;
 	}
@@ -497,9 +502,39 @@ namespace gui
 	// NEED TO FIX THIS!!
 	bool GridLayout::AddWidget( Widget* child )
 	{
-		if(!Widget::AddWidget(child)) return false;
+		if(!child) 
+			return false;
 
-		SaveGridProperties();
+// 		SaveGridProperties();
+		std::string name = "grid-" + child->GetName();
+		
+		//since this function should only get called by the manager
+		//when loading the ui.. the grid should have it's properties
+		//set with the location of its widgets in the grid, 
+		//and the col/row span... else.. something went wrong?
+		if(!m_settings.HasStringValue(name)) {
+			error_log("Widget(\"%s\") doesn't have any grid properties set!",child->GetName().c_str());
+			return false;
+		}
+		std::string temp = m_settings.GetStringValue(name);
+		std::stringstream s;
+		s.str(temp);
+
+		uint32 cellRow(0), cellCol(0), rowSpan(1), colSpan(1);
+		s >> cellRow >> cellCol >> rowSpan >> colSpan;
+
+		if(s.bad()) {
+			error_log("Error when reading grid properties for widget: %s", child->GetName().c_str());
+			return false;
+		}
+
+		AddWidgetToGrid(child,cellRow,cellCol);
+
+		//should make some error checking.. to make sure the row/cols are 
+		//empty before setting them.. 
+		m_items[cellRow][cellCol].SetRowSpan(rowSpan);
+		m_items[cellRow][cellCol].SetColSpan(colSpan);
+
 		return true;
 	}
 
@@ -511,16 +546,22 @@ namespace gui
 		}
 
 		std::stringstream s;
+		s << m_items.size() << " " << m_items[0].size();
+		m_settings.SetStringValue("grid-properties",s.str());
+		s.str(std::string());
 		
-		//the size of the grid.. assume every columns has the same size
-		s << m_items.size() << " " << m_items[0].size() << " ";
 		for(uint32 i=0; i<m_items.size(); i++) {
 			for(uint32 j=0; j<m_items[i].size(); j++) {
 				LayoutItem& layout_item = m_items[i][j];
-				s << layout_item.GetRowSpan() << " " << layout_item.GetColSpan() << " ";
+				if(layout_item.empty()) continue;
+
+				std::string name = "grid-" + layout_item.GetWidget()->GetName();
+				s << i << " " << j << " " << layout_item.GetRowSpan() << " " << layout_item.GetColSpan();
+				std::string value = s.str();
+				s.str(std::string());
+				m_settings.SetStringValue(name,value);
 			}
 		}
-		m_settings.SetStringValue("grid-properties", s.str());
 	}
 
 	void GridLayout::LoadGridProperties()
@@ -540,33 +581,6 @@ namespace gui
 			m_items[i].resize(colsize);
 		}
 
-		for(uint32 i=0; i<rowsize; i++) {
-			for(uint32 j=0; j<colsize; j++) {
-				uint32 rowspan = 0;
-				uint32 colspan = 0;
-
-				s >> rowspan >> colspan;
-				LayoutItem& layout_item = m_items[i][j];
-				layout_item.SetRowSpan(rowspan);
-				layout_item.SetColSpan(colspan);
-			}
-		}
-		for(uint32 i=0; i<rowsize; i++) {
-			for(uint32 j=0; j<colsize; j++) {
-				LayoutItem& layout_item = m_items[i][j];		
-
-				uint32 rowspan = layout_item.GetRowSpan();
-				uint32 colspan = layout_item.GetColSpan();
-
-				for(uint32 k=j+1; k<j+colspan; k++) {
-					m_items[i][k].SetExpand(true);
-				}
-				for(uint32 k=i+1; k<i+rowspan; k++) {
-					m_items[k][j].SetExpand(true);
-				}
-				
-			}
-		}
 	}
 
 	bool GridLayout::RemoveWidget( Widget* widget )

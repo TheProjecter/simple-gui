@@ -12,6 +12,8 @@ namespace gui
 
 		virtual void Draw() const;
 
+		void SetTitleName(const std::string& title_name);
+
 	protected:
 		virtual void Update(float diff);
 
@@ -21,6 +23,8 @@ namespace gui
 		virtual bool SetPosFromDrag(Drag* drag);
 		virtual bool HandleDragStop(Drag* drag);
 		virtual void UpdateClipArea();
+		virtual void ReloadSettings();
+		void SetButtonStyle(TitleBar::ButtonStyle button_style);
 	private:
 	};
 }

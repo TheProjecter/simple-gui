@@ -8,6 +8,7 @@ namespace gui
 	{
 	public:
 		enum ButtonStyle {
+			DEFAULT  = 0,
 			CLOSE	 = 1 << 0,
 			MAXIMIZE = 1 << 1,
 			MINIMIZE = 1 << 2,
@@ -16,7 +17,10 @@ namespace gui
 			ALL = 0xFF
 		};
 
-		TitleBar(const std::string& = "TitleBar", ButtonStyle buttonStyle = MIN_MAX_CLOSE);
+		TitleBar(const std::string& = "TitleBar");
+
+		void SetTitleName(const std::string& title);
+		void SetButtonStyle(ButtonStyle buttons);
 
 		void Resize(int w, int h);
 		void SetPos(int x, int y, bool forceMove /* = false */);

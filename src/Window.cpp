@@ -7,22 +7,27 @@ namespace gui
 			/*= TitleBar::MIN_MAX_CLOSE*/ ): m_maximized(false),
 			m_minimized(false)
 	{
-		TitleBar* titlebar = new TitleBar(title, buttons);
-		if(titlebar) {
-			AddWidget(titlebar);
-			m_mediator.Connect(titlebar,"default",gui::events::OnDrag);
+		m_type = WINDOW;
 
-			if(buttons & TitleBar::CLOSE)
-				m_mediator.Connect(titlebar,"close","default",sf::Event::MouseButtonPressed);
-			if(buttons & TitleBar::MINIMIZE)
-				m_mediator.Connect(titlebar,"min",  "default",sf::Event::MouseButtonPressed);
-			if(buttons & TitleBar::MAXIMIZE)
-				m_mediator.Connect(titlebar,"max",  "default",sf::Event::MouseButtonPressed);
-			if(buttons & TitleBar::QUESTION)
-				m_mediator.Connect(titlebar,"help", "default",sf::Event::MouseButtonPressed);
-		} else {
+		TitleBar* titlebar = new TitleBar(title);
+		if(!titlebar) {
 			error_log("Unable to create a titlebar for some reason!");
+			return;
 		}
+
+		if(buttons == TitleBar::DEFAULT) {
+			//if the buttons style is default.. then it means that it'll 
+			//get the button style from the saved settings of the window
+		} else {
+			titlebar->SetButtonStyle(buttons);
+		}
+
+		SetTitleName(title);
+		AddWidget(titlebar);
+
+		m_mediator.Connect(titlebar,"default",gui::events::OnDrag,false);
+
+
 	}
 
 	void Window::Update( float diff )
@@ -117,6 +122,51 @@ namespace gui
 				it->second->Draw();
 			StopClipping();
 		}
+
+	}
+
+	void Window::ReloadSettings()
+	{
+		Widget::ReloadSettings();
+
+		if(m_settings.HasStringValue("title")) {
+			SetTitleName(m_settings.GetStringValue("title"));
+		}
+		if(m_settings.HasUint32Value("button-style")) {
+			SetButtonStyle(TitleBar::ButtonStyle(m_settings.GetUint32Value("button-style")));
+		}
+
+	}
+
+	void Window::SetTitleName( const std::string& title_name )
+	{
+		TitleBar* titlebar = dynamic_cast<TitleBar*>(this->FindChildByName("my_titlebar"));
+
+		if(!titlebar) 
+			return;
+
+		m_settings.SetStringValue("title",title_name);
+		titlebar->SetTitleName(title_name);
+	}
+
+	void Window::SetButtonStyle( TitleBar::ButtonStyle buttons )
+	{
+		TitleBar* titlebar = dynamic_cast<TitleBar*>(this->FindChildByName("my_titlebar"));
+
+		if(!titlebar) 
+			return;
+
+		titlebar->SetButtonStyle(buttons);
+		m_settings.SetUint32Value("button-style",buttons);
+
+		if(buttons & TitleBar::CLOSE)
+			m_mediator.Connect(titlebar,"close","default",sf::Event::MouseButtonPressed,false);
+		if(buttons & TitleBar::MINIMIZE)
+			m_mediator.Connect(titlebar,"min",  "default",sf::Event::MouseButtonPressed,false);
+		if(buttons & TitleBar::MAXIMIZE)
+			m_mediator.Connect(titlebar,"max",  "default",sf::Event::MouseButtonPressed,false);
+		if(buttons & TitleBar::QUESTION)
+			m_mediator.Connect(titlebar,"help", "default",sf::Event::MouseButtonPressed,false);
 
 	}
 }
