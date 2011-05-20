@@ -110,6 +110,8 @@ namespace gui {
 		void HideChildren();
 		void ShowChildren();
 
+		bool IsLoading() const;
+
 		virtual bool IsCollision(const Rect& rect) const;
 		virtual bool IsCollision(const Rect& rect, sf::Vector2f& normal) const;
 		bool IsFocus() const;
@@ -143,6 +145,7 @@ namespace gui {
 		uint32 index;						//internally used to keep track of focusing levels
 		std::string m_name;					//name of the widget
 		bool m_needUpdate;					//currently unused?
+		bool m_loading;						//true if the widget is currently being loaded from an .ui file
 		bool m_isFocus;						//whether the widget has focus either globally or in another widget
 		bool m_clicked;						//was the widget clicked ?
 		bool m_released;					//was the click released ?
@@ -239,6 +242,7 @@ namespace gui {
 		void SaveLayout(TiXmlNode* node) const;
 		void SaveUI(TiXmlNode* node) const;
 		void ResolveChildCollisions();
+		void SetLoading(bool val);
 	};
 
 

@@ -113,6 +113,7 @@ namespace gui
 							if(temp) {
 								created = true;
 								temp->SetName(widgetName);
+								temp->SetLoading(true);
 							}
 							
 							break;						
@@ -243,7 +244,7 @@ namespace gui
 	{
 		if(!info.m_widget) return;
 
-		LInfo linfo = info.m_listenerInfo;
+		const LInfo& linfo = info.m_listenerInfo;
 
 		//add widget to gui
 		m_widgetInfos.pop();
@@ -263,37 +264,47 @@ namespace gui
 			}
 			
 		}
+
+		if(info.m_widget)
+			info.m_widget->SetLoading(false);
+
 		if(!linfo.size()) return;
 
-		//compile listener connections
-		for(LInfo::iterator itr = linfo.begin(); itr != linfo.end(); itr++) 
-		{
-			for(ListenerInfo::iterator it = itr->second.begin(); it != itr->second.end(); it++) 
-			{		
-			const std::vector<std::string>& paths = it->second;
-			for(uint32 i=0; i<paths.size(); i++) 
-			{
-				std::string path = paths[i];
-				uint32 pos = path.find("this.");
+		if(info.m_widget)
+			info.m_widget->SetLoading(true);
 
-				//build real path
-				if(pos != std::string::npos) {
-					path.replace(pos,4,info.m_widget->GetWidgetPath());
-				} 
-				std::stack<Widget*> hierarchy = m_gui->QueryWidgetPath(path);
-				Widget* temp = NULL;
-				while(hierarchy.size()) {
-					temp = hierarchy.top(); 
-					hierarchy.pop();
+		//compile listener connections
+		for(LInfo::const_iterator itr = linfo.begin(); itr != linfo.end(); itr++) 
+		{
+			for(ListenerInfo::const_iterator it = itr->second.begin(); it != itr->second.end(); it++) 
+			{		
+				const std::vector<std::string>& paths = it->second;
+				for(uint32 i=0; i<paths.size(); i++) 
+				{
+					std::string path = paths[i];
+					uint32 pos = path.find("this.");
+
+					//build real path
+					if(pos != std::string::npos) {
+						path.replace(pos,4,info.m_widget->GetWidgetPath());
+					} 
+					std::stack<Widget*> hierarchy = m_gui->QueryWidgetPath(path);
+					Widget* temp = NULL;
+					while(hierarchy.size()) {
+						temp = hierarchy.top(); 
+						hierarchy.pop();
+					}
+					if(!temp) { 
+						error_log("Error compiling widget \"%s\"", info.m_widget->GetWidgetPath());
+						return;
+					}	
+					info.m_widget->m_mediator.Connect(temp,itr->first,it->first);
 				}
-				if(!temp) { 
-					error_log("Error compiling widget \"%s\"", info.m_widget->GetWidgetPath());
-					return;
-				}	
-				info.m_widget->m_mediator.Connect(temp,itr->first,it->first);
-			}
 			}
 		}
+
+		if(info.m_widget)
+			info.m_widget->SetLoading(false);
 	}
 
 	void GuiMgrParser::CompileGui()
