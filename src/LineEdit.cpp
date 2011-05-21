@@ -12,7 +12,7 @@ namespace gui
 						m_cursorDiff(0), m_cursorShow(true),m_isPassword(false)
 	{
 		m_type = LINE_EDIT;
-		m_cursor = sf::Shape::Line(0,0,0,(float)m_rect.h,5,sf::Color(255,0,0));
+		m_cursor = sf::Shape::Line(0,0,0,(float)m_rect.h,2,sf::Color(0,0,0));
 
 		m_visibleText.SetSize(14);	//hardcoded value..
 		m_visibleText.SetColor(sf::Color(0,0,0));
@@ -199,6 +199,8 @@ namespace gui
 		sf::String s;
 
 		s.SetFont(m_visibleText.GetFont());
+		s.SetSize(m_visibleText.GetSize());
+		s.SetStyle(m_visibleText.GetStyle());
 		std::string temp;
 		if(m_isPassword) {
 			temp.insert(0,m_cursorIndex-m_cursorStartIndex, '*');
@@ -385,5 +387,53 @@ namespace gui
 			m_cursor.SetColor(sf::Color(0,0,0));
 			m_shape.SetColor(s_gui->GetTheme()->GetColor("line-edit_bg_color"));
 		}		
+	}
+
+	void LineEdit::Resize( int w, int h,bool save /* = true */ )
+	{
+		Widget::Resize(w,h,save);
+		m_cursor = sf::Shape::Line(0,0,0,(float)m_rect.h,2,sf::Color(0,0,0));
+	}
+
+	void LineEdit::OnClickPressed( sf::Event* event )
+	{
+		Widget::OnClickPressed(event);
+
+		sf::Vector2f pos = s_gui->GetWindow().ConvertCoords(event->MouseButton.X, event->MouseButton.Y);
+		int32 x = (int32)pos.x;
+		int32 y = (int32)pos.y;
+
+		//check collision with text to find cursor's new position
+		uint32 index = CalculateIndexForPos(x,y);
+
+		m_cursorIndex = index;
+		_SetCursorPos();
+	}
+
+	uint32 LineEdit::CalculateIndexForPos( int32 x, int32 y )
+	{
+		uint32 index = m_cursorStartIndex;
+		std::string temp = m_visibleText.GetText();
+		std::string temp1;
+		sf::String tmp;
+
+		tmp.SetSize(m_visibleText.GetSize());
+		tmp.SetStyle(m_visibleText.GetStyle());
+		tmp.SetFont(m_visibleText.GetFont());
+		tmp.SetPosition(m_visibleText.GetPosition());
+
+		for(uint32 i=0; i<temp.size(); i++) 
+		{
+
+			temp1 += temp[i];
+			tmp.SetText(temp1);
+
+			if(gui::IsCollision(Rect(x,y,1,1),tmp.GetRect())) 
+			{
+				return index;
+			}
+			index++;
+		}
+		return index;
 	}
 }

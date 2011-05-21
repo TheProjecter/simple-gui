@@ -75,12 +75,12 @@ namespace gui
 
 	bool Drag::IsRunning() const
 	{
-		return m_status == Running;
+		return (m_status == Running) && !m_stopped;
 	}
 
 	bool Drag::IsFinished() const
 	{
-		return m_status == Finished;
+		return (m_status == Finished) && m_stopped;
 	}
 
 	void Drag::Update( float diff )
@@ -109,6 +109,8 @@ namespace gui
 
 	bool Drag::StopDrag()
 	{
+		m_stopped = true;
+
 		if(m_status == Running)
 			m_status = Finished;
 		else return false;
@@ -130,8 +132,6 @@ namespace gui
 				m_dropStatus = Succesful;
 			else m_dropStatus = Failed;
 		}
-
-		m_stopped = true;
 
 		return true;
 	}

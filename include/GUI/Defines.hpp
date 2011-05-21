@@ -80,6 +80,7 @@ namespace gui {
 		Rect(const sf::Vector2f& pos, const sf::Vector2f& size);
 		Rect(const Rect& rect);
 		Rect(const sf::IntRect& rect);
+		Rect(const sf::FloatRect& rect);
 		
 		//overloaded operators
 		const Rect operator+(const Rect& other) const;
@@ -103,6 +104,7 @@ namespace gui {
 
 		//conversion operator with sf::IntRect
 		operator sf::IntRect() const;
+		operator sf::FloatRect() const;
 		int32 x,y,w,h;
 	};
 

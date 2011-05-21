@@ -113,7 +113,7 @@ namespace gui {
 
 	void GuiManager::StopDrag(int x, int y)
 	{
-		if(!m_curDrag) return;
+		if(!m_curDrag || m_curDrag->IsStopped()) return;
 
 		//only finish the drag if it actually started!
 		if(!m_curDrag->StopDrag()) {
@@ -534,7 +534,7 @@ namespace gui {
 
 	void GuiManager::MoveDrag( sf::Event* event )
 	{
-		if(!m_curDrag) return;
+		if(!m_curDrag || m_curDrag->IsStopped()) return;
 
 		int x = event->MouseMove.X;
 		int y = event->MouseMove.Y;
