@@ -1363,12 +1363,13 @@ namespace gui {
 
 		m_clipRect = m_rect;
 
-		m_clipRect.x = uint32(m_clipRect.x * xprc);
-		m_clipRect.y = uint32(m_clipRect.y * yprc);
+		m_clipRect.x = int32(m_clipRect.x * xprc);
+		m_clipRect.y = int32(m_clipRect.y * yprc);
 		m_clipRect.w = uint32(m_clipRect.w * wprc);
 		m_clipRect.h = uint32(m_clipRect.h * hprc);
 		
 		m_clipRect.y = newHeight - m_clipRect.y - m_clipRect.h;
+
 	}
 
 	gui::Widget::SizePolicy Widget::GetVerticalPolicy() const

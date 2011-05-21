@@ -27,7 +27,7 @@ namespace gui {
 
 		void SetWindow(sf::RenderWindow* window);
 		sf::RenderWindow& GetWindow() const;
-		void RegisterEvent(sf::Event* event);
+		void RegisterEvent(sf::Event& event);
 
 		bool AddWidget(Widget* widget);
 		void DeleteWidget(const std::string& name);
@@ -64,7 +64,7 @@ namespace gui {
 		Theme* m_theme;						//the current theme used by widgets
 		WidgetList m_widgets;				//holds the parent widgets
 		uint32 index;						//used to keep track of focusing levels
-		std::vector<sf::Event*> m_events;	//events queue
+		std::vector<sf::Event> m_events;	//events queue
 		Widget* m_focus;					//holds the currently focused widget if any
 		Widget* m_hoverTarget;
 		sf::RenderWindow& m_window;			//pointer to the window we're working on

@@ -40,6 +40,7 @@ namespace gui
 		uint32 m_startingLine;
 		
 		virtual void Draw() const;
+		virtual void InitGraphics();
 	};
 
 	void Parse(std::stringstream& s,std::vector<Line>& text, const Rect& container);

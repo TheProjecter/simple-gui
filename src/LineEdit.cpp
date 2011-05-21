@@ -12,12 +12,10 @@ namespace gui
 						m_cursorDiff(0), m_cursorShow(true),m_isPassword(false)
 	{
 		m_type = LINE_EDIT;
-		sf::Vector2f p1,p2;
-		p1 = GetPos(); p2 = GetPos();
-		p2.y += m_rect.h;
-		m_cursor = sf::Shape::Line(p1,p2,3.f,sf::Color(0,0,0));
+		m_cursor = sf::Shape::Line(0,0,0,(float)m_rect.h,5,sf::Color(255,0,0));
 
-
+		m_visibleText.SetSize(14);	//hardcoded value..
+		m_visibleText.SetColor(sf::Color(0,0,0));
 
 		//buttons particular size hint
 		m_sizeHint.x = 75;
@@ -54,9 +52,9 @@ namespace gui
 	}
 */
 
-	void LineEdit::SetPos(int x, int y,bool forceMove /*= false*/)
+	void LineEdit::SetPos(int x, int y,bool forceMove /*= false*/, bool save/*=true*/)
 	{	
-		Widget::SetPos(x,y,forceMove);
+		Widget::SetPos(x,y,forceMove,save);
 		if(!m_movable && !forceMove) return;
 
 		m_visibleText.SetPosition((float)m_rect.x,(float)m_rect.y);
@@ -242,9 +240,11 @@ namespace gui
 		sf::String tmp1;
 		std::string temp;
 		tmp.SetFont(m_visibleText.GetFont());
+		tmp.SetSize(m_visibleText.GetSize());
 		tmp.SetStyle(m_visibleText.GetStyle());
 
 		tmp1.SetFont(m_visibleText.GetFont());
+		tmp1.SetSize(m_visibleText.GetSize());
 		tmp1.SetStyle(m_visibleText.GetStyle());
 
 		if(moveStartIndex) {
@@ -379,8 +379,10 @@ namespace gui
 	{
 		if(m_settings.HasUint32Value("line-edit_bg_color")) {
 			m_shape.SetColor(UnsignedToColor(m_settings.GetUint32Value("background-color")));
+			m_cursor.SetColor(sf::Color(0,0,0));
 			m_individualTheme = true;
 		} else if(s_gui->GetTheme()){
+			m_cursor.SetColor(sf::Color(0,0,0));
 			m_shape.SetColor(s_gui->GetTheme()->GetColor("line-edit_bg_color"));
 		}		
 	}

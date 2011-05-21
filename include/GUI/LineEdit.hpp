@@ -9,7 +9,7 @@ namespace gui {
 	public:
 		LineEdit();
 		void SetBackgroundColor(sf::Color color);
-		void SetPos(int x, int y,bool forceMove = false);
+		void SetPos(int x, int y, bool forceMove = false, bool save = true);
 		void SetPasswordField(bool flag);
 	private:
 		void Draw() const;
