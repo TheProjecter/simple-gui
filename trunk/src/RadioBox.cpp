@@ -65,4 +65,16 @@ namespace gui
 		Widget::OnClickPressed(event);
 		Check();
 	}
+
+	void RadioBox::ReloadSettings()
+	{
+		Widget::ReloadSettings();
+
+		if(m_settings.HasUint32Value("checked")) {
+			bool checked = (m_settings.GetUint32Value("checked") != 0);
+			if(checked) {
+				this->Check();
+			} else this->UnCheck();
+		}
+	}
 }

@@ -4,11 +4,15 @@
 namespace gui 
 {
 	Slider::Slider() : m_curValue(0),m_lowerLimit(0), m_upperLimit(100), 
-					   m_sliderDrag(false),m_hotSpotX(0),m_hotSpotY(0),m_cursor(NULL)
+					   m_sliderDrag(false),m_hotSpotX(0),m_hotSpotY(0)
 	{
 		m_movable = false; 
 		m_type = SLIDER;
 		m_cursorRect.w = 15;
+		m_cursorRect.h = 20;
+		
+		m_cursor = sf::Shape::Rectangle(0,0,(float)m_cursorRect.w, 
+					(float)m_cursorRect.h,sf::Color(213,198,224));
 
 		//buttons particular size hint
 		m_sizeHint.x = 75;
@@ -23,7 +27,7 @@ namespace gui
 
 	Slider::Slider( int upper, int lower ) : m_curValue(0),m_lowerLimit(lower),
 						m_upperLimit(upper), m_sliderDrag(false),m_hotSpotX(0),
-						m_hotSpotY(0),m_cursor(NULL)
+						m_hotSpotY(0)
 	{
 		m_movable = false;
 		m_type = SLIDER;
@@ -37,7 +41,18 @@ namespace gui
 
 	void Slider::SetValue( int value )
 	{
+		error_log("Posted value=%d changed event!",value);
+
+		if(value < m_lowerLimit) {
+			value = m_lowerLimit;
+		} else if(value > m_upperLimit) {
+			value = m_upperLimit;
+		}
 		m_curValue = value;
+
+		m_mediator.PostEvent(new OnValueChanged(this,value));
+
+		CalculateSliderPos();
 	}
 
 	void Slider::SetLimits( int lower, int upper )
@@ -49,6 +64,7 @@ namespace gui
 			m_upperLimit = lower; 
 			m_lowerLimit = upper; 
 		}
+		CalculateSliderPos();
 	}
 
 /*
@@ -64,6 +80,8 @@ namespace gui
 
 	void Slider::OnClickPressed(sf::Event *event)
 	{
+		Widget::OnClickPressed(event);
+
 		m_needUpdate = true;
 
 		sf::Vector2f pos((float)event->MouseButton.X,
@@ -88,13 +106,9 @@ namespace gui
 			ConvertCoords(pos);
 
 			if((int)spot.x > m_cursorRect.x) {
-				m_curValue += (m_upperLimit-m_lowerLimit)/10;
-				if(m_curValue > m_upperLimit)
-					m_curValue = m_upperLimit;
+				SetValue(m_curValue + (m_upperLimit-m_lowerLimit)/10);
 			} else {
-				m_curValue -= (m_upperLimit-m_lowerLimit)/10;
-				if(m_curValue < m_lowerLimit) 
-					m_curValue = m_lowerLimit;
+				SetValue(m_curValue - (m_upperLimit-m_lowerLimit)/10);
 			}
 		}
 	}
@@ -103,30 +117,26 @@ namespace gui
 	{
 
 		Widget::Update(diff);
-		Widget::Draw(m_cursor);
 	}
 
 	void Slider::Draw() const
 	{
 		Widget::Draw();
-		if(!m_cursor) return;
 
-		sf::Sprite sprite;
-		sprite.SetImage(*m_cursor);
-		sprite.SetPosition(sf::Vector2f((float)m_cursorRect.x,(float)m_cursorRect.y));
-		sprite.Resize(sf::Vector2f((float)m_cursorRect.w,(float)m_cursorRect.h));
-		sprite.SetColor(sf::Color(255,255,255,m_transparency));
-
-		s_gui->GetWindow().Draw(sprite);
+		s_gui->GetWindow().Draw(m_cursor);
 	}
 	void Slider::OnClickReleased(sf::Event *event)
 	{
+		Widget::OnClickReleased(event);
+
 		m_sliderDrag = false;
 		CalculateSliderPos();
 	}
 
 	void Slider::OnOtherEvents(sf::Event* event)
 	{
+		Widget::OnOtherEvents(event);
+
 		if(event->Type == sf::Event::MouseMoved) 
 		{
 			int mouseX = event->MouseMove.X; 
@@ -145,15 +155,15 @@ namespace gui
 			//if it lands out of bonds.. correct that !
 			if(landSpotX > m_rect.x + m_rect.w - m_cursorRect.w) {
 				landSpotX = m_rect.x + m_rect.w -m_cursorRect.w;
-				m_curValue = m_upperLimit;
+				SetValue(m_upperLimit);
 			} else if(landSpotX < m_rect.x) {
 				landSpotX = m_rect.x;
-				m_curValue = m_lowerLimit;
+				SetValue(m_lowerLimit);
 			} else {
 				double percent = (float)((landSpotX-m_rect.x)/(float)(m_rect.w-m_cursorRect.w));
 				int maxNumbers = m_upperLimit - m_lowerLimit;
 
-				m_curValue = m_lowerLimit + int(maxNumbers*percent);
+				SetValue(m_lowerLimit + int(maxNumbers*percent));
 			}
 
 
@@ -169,13 +179,12 @@ namespace gui
 	{
 		Widget::Resize(w,h,save);
 		m_cursorRect.h = h;
+		m_cursor = sf::Shape::Rectangle(0,0,(float)m_cursorRect.w,(float)h,
+					sf::Color(213,198,224));
 	}
 
 	void Slider::CalculateSliderPos()
 	{
-		if(m_curValue <= m_lowerLimit) m_curValue = m_lowerLimit;
-		else if(m_curValue >= m_upperLimit) m_curValue = m_upperLimit;
-
 		//update the cursor position
 		int xAxisDisplacement = std::abs(m_curValue - m_lowerLimit);  
 		int maxNumbersPosible = m_upperLimit - m_lowerLimit;
@@ -192,11 +201,50 @@ namespace gui
 		//move the cursor
 		m_cursorRect.x = m_rect.x + xDisp;
 		m_cursorRect.y = m_rect.y;
+
+		m_cursor.SetPosition(sf::Vector2f((float)m_cursorRect.x,(float)m_cursorRect.y));
 	}
 
-	void Slider::SetPos( int x, int y, bool forceMove /*= false*/ )
+	void Slider::SetPos( int x, int y, bool forceMove /*= false*/, bool save/*=true*/ )
 	{
-		Widget::SetPos(x,y,forceMove);
+		Widget::SetPos(x,y,forceMove,save);
 		CalculateSliderPos();
+	}
+
+	void Slider::ReloadSettings()
+	{
+		Widget::ReloadSettings();
+
+		int32 upper = 100;
+		int32 lower = 0;
+		if(m_settings.HasInt32Value("upper-limit")) {
+			upper = m_settings.GetInt32Value("upper-limit");
+		}
+		if(m_settings.HasInt32Value("lower-limit")) {
+			lower = m_settings.GetInt32Value("lower-limit");
+		}
+		this->SetLimits(lower,upper);
+
+		if(m_settings.HasInt32Value("value")) {
+			int32 value = m_settings.GetInt32Value("value");
+			this->SetValue(value);
+		}
+	}
+
+	void Slider::InitGraphics()
+	{
+		if(m_settings.HasUint32Value("slider-background")) {
+			m_shape.SetColor(UnsignedToColor(m_settings.GetUint32Value("slider-background")));
+			m_individualTheme = true;
+		} else if(s_gui->GetTheme()){
+			m_shape.SetColor(s_gui->GetTheme()->GetColor("slider-background"));
+ 		}
+// 		if(m_settings.HasUint32Value("slider-cursor")) {
+// 			m_shape.SetColor(UnsignedToColor(m_settings.GetUint32Value("slider-cursor")));
+// 			m_individualTheme = true;
+// 		} else if(s_gui->GetTheme()){
+// 			m_shape.SetColor(s_gui->GetTheme()->GetColor("slider-cursor"));
+// 		}
+
 	}
 }

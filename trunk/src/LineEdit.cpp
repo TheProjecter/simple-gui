@@ -12,6 +12,7 @@ namespace gui
 						m_cursorDiff(0), m_cursorShow(true),m_isPassword(false)
 	{
 		m_type = LINE_EDIT;
+		m_movable = false;	//not movable by default
 		m_cursor = sf::Shape::Line(0,0,0,(float)m_rect.h,2,sf::Color(0,0,0));
 
 		m_visibleText.SetSize(14);	//hardcoded value..
@@ -63,6 +64,8 @@ namespace gui
 
 	void LineEdit::OnKeyPressed(sf::Event *event)
 	{
+		Widget::OnKeyPressed(event);
+
 		bool changed = false;
 		if(event->Key.Code == sf::Key::Back) {
 		} else if(event->Key.Code == sf::Key::Delete) {
@@ -150,6 +153,8 @@ namespace gui
 
 	void LineEdit::OnTextEntered(sf::Event* event)
 	{
+		Widget::OnTextEntered(event);
+
 		//backspace pressed ?
 		if(event->Text.Unicode == 8) {
 			debug_log("Backspace pressed!");
@@ -381,10 +386,10 @@ namespace gui
 	{
 		if(m_settings.HasUint32Value("line-edit_bg_color")) {
 			m_shape.SetColor(UnsignedToColor(m_settings.GetUint32Value("background-color")));
-			m_cursor.SetColor(sf::Color(0,0,0));
+			m_cursor.SetColor(sf::Color(0,0,0));	//hardcoded value
 			m_individualTheme = true;
 		} else if(s_gui->GetTheme()){
-			m_cursor.SetColor(sf::Color(0,0,0));
+			m_cursor.SetColor(sf::Color(0,0,0));	//hardcoded value
 			m_shape.SetColor(s_gui->GetTheme()->GetColor("line-edit_bg_color"));
 		}		
 	}
@@ -435,5 +440,40 @@ namespace gui
 			index++;
 		}
 		return index;
+	}
+
+	void LineEdit::ReloadSettings()
+	{
+		Widget::ReloadSettings();
+
+		if(m_settings.HasStringValue("text")) {
+			std::string text = m_settings.GetStringValue("text");
+			SetText(text);
+		}
+	}
+
+	void LineEdit::SetText( const std::string& text )
+	{
+		m_totalText = text;
+		m_visibleChars = 0;	//recalculate the visible chars
+		m_cursorStartIndex = 0;
+
+		TestSizeErrors(true);
+
+		std::string temp = m_totalText.substr(m_cursorStartIndex, m_visibleChars);
+		m_cursorIndex = temp.size();
+		m_visibleText.SetText(temp);
+
+		_SetCursorPos();
+	}
+
+	const std::string& LineEdit::GetText() const
+	{
+		return m_totalText;
+	}
+
+	std::string LineEdit::GetVisibleText() const
+	{
+		return m_visibleText.GetText();
 	}
 }

@@ -36,7 +36,7 @@ namespace gui
 	}
 
 	Drag::Drag( gui::Widget* target, sf::Event* event):
-		  m_target(target), m_forceMove(true/*debug*/), m_type(Drag::Widget),
+		  m_target(target), m_forceMove(false), m_type(Drag::Widget),
 		  m_minDragDist(5), m_status(NotStarted), m_focusTarget(NULL),
 		  m_dropStatus(NotStarted), m_stopped(false)
 	{

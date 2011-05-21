@@ -35,7 +35,7 @@ namespace gui {
 		enum Events {
 
 			/* Widget specific events */
-			OnResize = sf::Event::Count,
+			OnResize = 16 /*sf::Event::Count*/,
 			OnMove,
 			OnDrag,
 			OnShow,
@@ -45,6 +45,8 @@ namespace gui {
 			OnHoverLost,
 			OnFocus,
 			OnFocusLost,
+
+			OnValueChanged,
 
 			Count
 		};

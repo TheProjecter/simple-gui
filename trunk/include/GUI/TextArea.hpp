@@ -30,6 +30,7 @@ namespace gui
 	public:
 		TextArea();
 		void SetText(const std::string& text);
+		const std::string& GetText() const;
 		void Resize(int w, int h, bool save = true);
 		void SetPos(int x, int y, bool forceMove  = false ,bool save=true);
 	private:
@@ -41,6 +42,7 @@ namespace gui
 		
 		virtual void Draw() const;
 		virtual void InitGraphics();
+		virtual void ReloadSettings();
 	};
 
 	void Parse(std::stringstream& s,std::vector<Line>& text, const Rect& container);
