@@ -19,6 +19,7 @@ namespace gui {
 
 
 	protected:
+		virtual void ReloadSettings();
 		void Draw();
 		void OnClickPressed(sf::Event* event) { m_checked = !m_checked; }
 

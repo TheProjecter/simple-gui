@@ -98,6 +98,15 @@ namespace gui
 		}
 	}
 
+	void Button::ReloadSettings()
+	{
+		Widget::ReloadSettings();
+
+		if(m_settings.HasStringValue("text")) {
+			std::string text = m_settings.GetStringValue("text");
+			SetText(text);
+		}
+	}
 	ImageButton::ImageButton()
 	{
 		m_type = IMAGE_BUTTON;

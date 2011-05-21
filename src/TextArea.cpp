@@ -9,7 +9,6 @@
 void gui::TextArea::SetText( const std::string& text )
 {
 	m_text = text;
-	m_type = TEXT_AREA;
 	std::stringstream s;
 	s.str(text);
 	Parse(s,m_lines,m_rect);
@@ -42,6 +41,7 @@ gui::TextArea::TextArea(): m_viewableLines(1),m_totalLines(1),
 	m_sizeHint.x = 320;
 	m_sizeHint.y = 240;
 
+	m_movable = false;	
 	m_type = TEXT_AREA;
 
 	//buttons particular size policy
@@ -79,6 +79,20 @@ void gui::TextArea::InitGraphics()
 
 }
 
+void gui::TextArea::ReloadSettings()
+{
+	Widget::ReloadSettings();
+
+	if(m_settings.HasStringValue("text")) {
+		std::string text = m_settings.GetStringValue("text");
+		SetText(text);
+	}
+}
+
+const std::string& gui::TextArea::GetText() const
+{
+	return m_text;
+}
 inline float char_width(char* c, const sf::Font& font)
 {
 	sf::String temp;

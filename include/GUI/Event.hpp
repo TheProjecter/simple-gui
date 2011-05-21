@@ -53,7 +53,7 @@ namespace gui
 	class OnKeyPressed : public WidgetEvent
 	{
 	public:
-		OnKeyPressed(Widget* widget = NULL, sf::Event::KeyEvent key = sf::Event::KeyEvent());
+		OnKeyPressed(Widget* widget, sf::Event::KeyEvent key);
 		const sf::Event::KeyEvent& GetKey() const;
 	protected:
 		sf::Event::KeyEvent m_key;
@@ -62,7 +62,7 @@ namespace gui
 	class OnKeyReleased : public WidgetEvent 
 	{
 	public:
-		OnKeyReleased(Widget* widget, sf::Event::KeyEvent key = sf::Event::KeyEvent());
+		OnKeyReleased(Widget* widget, sf::Event::KeyEvent key);
 		const sf::Event::KeyEvent& GetKey() const;
 	protected:
 		sf::Event::KeyEvent m_key;
@@ -114,6 +114,15 @@ namespace gui
 	{
 	public:
 		OnMove(Widget* widget = NULL);
+	};
+	class OnValueChanged : public WidgetEvent
+	{
+	public:
+		OnValueChanged(Widget* widget, int32 value);
+		
+		int32 GetValue() const;
+	private:
+		int32 m_value;
 	};
 
 	class Drag;

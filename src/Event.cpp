@@ -120,4 +120,16 @@ namespace gui
 	{
 		return m_drag;
 	}
+
+	OnValueChanged::OnValueChanged( Widget* widget, int32 value ) : 
+		WidgetEvent(widget), m_value(value)
+	{
+		m_type = events::OnValueChanged;
+	}
+
+	int32 OnValueChanged::GetValue() const
+	{
+		return m_value;
+	}
+
 }

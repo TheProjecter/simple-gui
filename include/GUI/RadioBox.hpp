@@ -20,7 +20,7 @@ namespace gui {
 	protected:
 		void Draw() const;
 		void OnClickPressed(sf::Event* event);
-
+		void ReloadSettings();
 	};
 
 }

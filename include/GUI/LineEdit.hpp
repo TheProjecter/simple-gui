@@ -12,11 +12,15 @@ namespace gui {
 		void SetPos(int x, int y, bool forceMove = false, bool save = true);
 		void SetPasswordField(bool flag);
 		void Resize(int w, int h,bool save /* = true */);
+		void SetText(const std::string& text);
+		const std::string& GetText() const;
+		std::string GetVisibleText() const;
 	private:
 		void Draw() const;
 		void _SetCursorPos();
 		uint32 _FindCursorPos(const std::string& text, uint32 pos,int searchType);
 	protected:
+		void ReloadSettings();
 		void InitGraphics();
 		void Update(float diff);
 		void SetVisibleText();

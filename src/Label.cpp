@@ -9,7 +9,7 @@ namespace gui {
 		Widget::Draw();
 
 		//then draw the text
-		s_gui->GetWindow().Draw(text);
+		s_gui->GetWindow().Draw(m_text);
 	}
 	void Label::SetPos(int x, int y, bool forceMove /*=false*/, bool save /*=true*/)
 	{
@@ -17,37 +17,37 @@ namespace gui {
 
 		switch(alignment) {
 			case Left:	
-				text.SetPosition((float)x+5, (float)y+5);			
+				m_text.SetPosition((float)x+5, (float)y+5);			
 				break;
 			case Right:	
-				text.SetPosition((float)x+m_rect.w-5-text.GetRect().GetWidth(), (float)y+5);	
+				m_text.SetPosition((float)x+m_rect.w-5-m_text.GetRect().GetWidth(), (float)y+5);	
 				break;
-			case Top:	text.SetPosition((float)x+5, (float)y+5);			
+			case Top:	m_text.SetPosition((float)x+5, (float)y+5);			
 				break;	
-			case Bottom:text.SetPosition((float)x+5, (float)y+m_rect.h-5);	
+			case Bottom:m_text.SetPosition((float)x+5, (float)y+m_rect.h-5);	
 				break;
 			case CenterHorizontal:	
-				text.SetPosition((float)x+m_rect.w/2-text.GetRect().GetWidth()/2,(float)y+5); 
+				m_text.SetPosition((float)x+m_rect.w/2-m_text.GetRect().GetWidth()/2,(float)y+5); 
 				break;
 			case CenterVertical:	
-				text.SetPosition((float)x+5, (float)y+m_rect.h/2-text.GetRect().GetHeight()/2); 
+				m_text.SetPosition((float)x+5, (float)y+m_rect.h/2-m_text.GetRect().GetHeight()/2); 
 				break;
 			case Center:			
-				text.SetPosition((float)x+m_rect.w/2-text.GetRect().GetWidth()/2,
-								(float)y+m_rect.h/2-text.GetRect().GetHeight()/2); 
+				m_text.SetPosition((float)x+m_rect.w/2-m_text.GetRect().GetWidth()/2,
+								(float)y+m_rect.h/2-m_text.GetRect().GetHeight()/2); 
 				break;
 			case LeftBottom:		
-				text.SetPosition((float)x+5, (float)y+m_rect.h-5-text.GetRect().GetWidth()); 
+				m_text.SetPosition((float)x+5, (float)y+m_rect.h-5-m_text.GetRect().GetWidth()); 
 				break;
 			case LeftTop:			
-				text.SetPosition((float)x+5, (float)y+5);
+				m_text.SetPosition((float)x+5, (float)y+5);
 				break;
 			case RightBottom:		
-				text.SetPosition((float)x+m_rect.w-5-text.GetRect().GetWidth(),
-					y+m_rect.w-5-text.GetRect().GetHeight());
+				m_text.SetPosition((float)x+m_rect.w-5-m_text.GetRect().GetWidth(),
+					y+m_rect.w-5-m_text.GetRect().GetHeight());
 				break;
 			case RightTop:			
-				text.SetPosition((float)x+5,(float)y+5); 
+				m_text.SetPosition((float)x+5,(float)y+5); 
 				break;
 			default: break;
 		}
@@ -56,10 +56,10 @@ namespace gui {
 	{
 		if(!m_visible) return;
 		Widget::Update(diff);
-		if(text.GetRect().GetWidth()>m_rect.w) 
-			m_rect.w = (int)text.GetRect().GetWidth(); 
-		if(text.GetRect().GetHeight() > m_rect.h)
-			m_rect.h = (int)text.GetRect().GetHeight();
+		if(m_text.GetRect().GetWidth()>m_rect.w) 
+			m_rect.w = (int)m_text.GetRect().GetWidth(); 
+		if(m_text.GetRect().GetHeight() > m_rect.h)
+			m_rect.h = (int)m_text.GetRect().GetHeight();
 	}
 
 	Label::Label() : alignment(Center)
@@ -79,6 +79,30 @@ namespace gui {
 	void Label::SetAlignment( Alignment a )
 	{
 		alignment = a;
+	}
+
+	void Label::ReloadSettings()
+	{
+		Widget::ReloadSettings();
+
+		if(m_settings.HasStringValue("text")) {
+			std::string text = m_settings.GetStringValue("text");
+			SetText(text);
+		}
+		if(m_settings.HasUint32Value("size")) {
+			uint32 size = m_settings.GetUint32Value("size");
+			m_text.SetSize(size);
+		}
+	}
+
+	void Label::SetText( const std::string& text )
+	{
+		m_text.SetText(text);
+	}
+
+	std::string Label::GetText() const
+	{
+		return m_text.GetText();
 	}
 }
 

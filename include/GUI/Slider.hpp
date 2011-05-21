@@ -10,14 +10,14 @@ namespace gui
 			~Slider() {}
 			void SetCursorImage(sf::Image* image);
 			void SetLimits(int lower, int upper);
-			void SetPos(int x, int y, bool forceMove = false);
+			void SetPos(int x, int y, bool forceMove = false, bool save = true);
 			int GetValue();
 			void SetValue(int value);
 			void Resize(int w, int h, bool save = true);
 		private:
 			int m_curValue;
 			int m_upperLimit, m_lowerLimit;
-			sf::Image* m_cursor;
+			sf::Shape m_cursor;
 			Rect m_cursorRect;
 			bool m_sliderDrag;					//drag flag
 			int m_hotSpotX, m_hotSpotY;			//used for drag
@@ -30,5 +30,8 @@ namespace gui
 			virtual void OnClickPressed(sf::Event* event);
 			virtual void OnClickReleased(sf::Event* event);
 			virtual void OnOtherEvents(sf::Event* event);
+
+			virtual void ReloadSettings();
+			virtual void InitGraphics();
 	};
 }

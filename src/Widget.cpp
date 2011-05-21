@@ -342,13 +342,13 @@ namespace gui {
 
 	void Widget::OnKeyPressed( sf::Event* event )
 	{
-		m_mediator.PostEvent(new gui::OnKeyPressed(this));
+		m_mediator.PostEvent(new gui::OnKeyPressed(this,event->Key));
 		//std::cout << GetName() << ": Key Pressed" << std::endl;
 	}
 
 	void Widget::OnKeyReleased( sf::Event* event )
 	{
-		m_mediator.PostEvent(new gui::OnKeyReleased(this));
+		m_mediator.PostEvent(new gui::OnKeyReleased(this,event->Key));
 		//std::cout << GetName() << ": Key Released" << std::endl;
 	}
 

@@ -12,6 +12,7 @@ namespace gui {
 		void SetPos(int x, int y, bool forceMove = false,bool save=true);
 		
 	protected:
+		virtual void ReloadSettings();
 		virtual void Draw() const;
 		void OnClickPressed(sf::Event* event);
 		void OnClickReleased(sf::Event* event);
