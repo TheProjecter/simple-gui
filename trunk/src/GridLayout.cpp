@@ -7,7 +7,7 @@ namespace gui
 	GridLayout::GridLayout()
 	{
 		m_type = GRID_LAYOUT;
-		m_panning = 5;		//by default 5 pixels panning
+		m_panning = 2;		//by default 5 pixels panning
 
 		//resize to a 1 by 1 grid
 		m_items.resize(1);
@@ -78,6 +78,34 @@ namespace gui
 		for(uint32 i=0; i<m_items.size(); i++) {
 			for(uint32 j=0; j<m_items[i].size(); j++) {
 				LayoutItem& layout_item = m_items[i][j];
+				Rect old = layout_item.GetRect();
+				Rect new_rect = old;
+				bool need_resize = false;
+
+				if(layout_item.GetRowSpan() > 1 || layout_item.GetColSpan() > 1) {
+					need_resize = true;
+					//take in account for multiple columns expanded cells
+					if(layout_item.GetColSpan() > 1) {
+						uint32 extra_width = 0;
+						for(uint32 k=j+1; k<j+layout_item.GetColSpan(); k++) {
+							LayoutItem& cell = m_items[i][k];
+							extra_width += cell.GetRect().w;
+						}
+						new_rect.w -= extra_width;
+					}
+				}
+				//take in account for multiple columns expanded cells
+				if(layout_item.GetRowSpan() > 1) {
+					uint32 extra_height = 0;
+					for(uint32 k=i+1; k<i+layout_item.GetRowSpan(); k++) {
+						LayoutItem& cell = m_items[k][0];
+						extra_height += cell.GetRect().h;
+					}
+					new_rect.h -= extra_height;
+				}
+				if(need_resize) {
+					layout_item.SetSize(new_rect.w, new_rect.h, IsExtremity(i,j));
+				}
 
 				switch(layout_item.IsCollision(xpos,ypos,m_panning)) {
 					case LayoutItem::NoCollision: break;
@@ -110,6 +138,9 @@ namespace gui
 						cellRow = i;
 						cellCol = j+1;
 						break;
+				}
+				if(need_resize) {
+					layout_item.SetSize(old.w,old.h,IsExtremity(i,j));
 				}
 
 				if(collision) break;	//else it may crash because we might have changed indexes when adding a widget
@@ -382,15 +413,8 @@ namespace gui
 				for(uint32 k=i; k<i+rowspan; k++) {
 					heightSpan += rowsInfo[k].first;
 				}
-				//check if the cell is an outer-cell(extremity)
-				bool extremity = false;
-				if((j == 0 || j == (m_items[i].size()-1)) ||
-					(i == 0 || i == (m_items.size()-1))) 
-				{
-					extremity = true;
-				}
 
-				layout_item.SetSize(widthSpan,heightSpan,extremity);
+				layout_item.SetSize(widthSpan,heightSpan,IsExtremity(i,j));
 				layout_item.SetPos(xpos,ypos);
 
 				//if it span over multiple columns..move by width.
@@ -972,6 +996,11 @@ namespace gui
 	void LayoutItem::SetWidget( Widget* widget )
 	{
 		m_widget = widget;
+		if(widget) {
+			m_shape.SetColor(sf::Color(255,0,0,255));
+		} else {
+			m_shape.SetColor(sf::Color(255,255,255,0));
+		}
 	}
 
 	const Rect& LayoutItem::GetRect() const
@@ -1043,10 +1072,11 @@ namespace gui
 			temp.y += 2;
 		}
 		m_shape = sf::Shape::Rectangle((float)temp.x,(float)temp.y,
-					(float)temp.w,(float)temp.h-2,sf::Color(0,0,0,0),2,
-					sf::Color(0,255,0));
+					(float)temp.w,(float)temp.h-2,sf::Color(255,255,255,0),2,
+					sf::Color(0,0,0,128));
 
-		m_shape.SetColor(sf::Color(0,0,0,128));
+		
+		m_shape.SetColor(sf::Color(255,255,255));
 	}
 
 	void LayoutItem::SetRect( int32 x, int32 y, uint32 w, uint32 h )
@@ -1165,8 +1195,8 @@ namespace gui
 
 	void LayoutItem::Draw( sf::RenderWindow& window ) const
 	{
-		if(m_expanded) 
-			return;
+ 		if(m_expanded) 
+ 			return;
 
 		window.Draw(m_shape);
 	}
@@ -1190,5 +1220,15 @@ namespace gui
 		//set it's position based on it's size policy
 		m_widget->SetPos(xpos, ypos,true);
 
+	}
+
+	bool GridLayout::IsExtremity(uint32 row, uint32 col) const
+	{
+		if((col == 0 || col == (m_items[row].size()-1)) ||
+			(row == 0 || row == (m_items.size()-1))) 
+		{
+			return true;
+		}
+		return false;
 	}
 }
