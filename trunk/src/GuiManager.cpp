@@ -117,8 +117,8 @@ namespace gui {
 
 		//only finish the drag if it actually started!
 		if(!m_curDrag->StopDrag()) {
-			delete m_curDrag;
-			m_curDrag = NULL;
+// 			delete m_curDrag;
+// 			m_curDrag = NULL;
 			return;
 		}
 		Widget* parent = m_curDrag->GetTargetParent();
@@ -130,8 +130,8 @@ namespace gui {
 			parent->HandleDragStop(m_curDrag);
 		}
 
-		delete m_curDrag;
-		m_curDrag = NULL;
+// 		delete m_curDrag;
+// 		m_curDrag = NULL;
 	}
 
 	std::vector<Widget*> GuiManager::GetWidgetsByType(WidgetType type) const
@@ -171,6 +171,12 @@ namespace gui {
 			}
 		}
 
+		//destroy the drag if it stopped
+		if(m_curDrag && m_curDrag->IsStopped()) {
+			delete m_curDrag;
+			m_curDrag = NULL;
+		}
+
 		//clear the dead widgets
 		for(uint32 i=0; i<m_freeWidgets.size(); i++) {
 			WidgetList::iterator it = m_widgets.find(m_freeWidgets[i]->GetId());
@@ -183,6 +189,9 @@ namespace gui {
 		}
 		m_freeWidgets.clear();
 
+		//we solved the events.. so clear them
+		m_events.clear();
+
 		//draw the drag if any
 		if(m_curDrag) {
 			Widget* parent = m_curDrag->GetTargetParent();
@@ -192,7 +201,7 @@ namespace gui {
 		}
 	}
 
-	void GuiManager::RegisterEvent( sf::Event* event )
+	void GuiManager::RegisterEvent( sf::Event& event )
 	{
 		m_events.push_back(event);
 	}
@@ -384,7 +393,7 @@ namespace gui {
 	void GuiManager::_HandleEvents()
 	{
 		for(int i=0; i<(int)m_events.size(); i++) {
-			sf::Event* curEvent = m_events[i];
+			sf::Event* curEvent = &m_events[i];
 			WidgetList::reverse_iterator itr;
 			switch(curEvent->Type) {
 			case sf::Event::MouseButtonPressed:
@@ -507,8 +516,6 @@ namespace gui {
 			}
 		}
 
-		//we solved the events
-		m_events.clear();
 
 	}
 

@@ -859,7 +859,9 @@ namespace gui
 		if(!FindWidgetInGrid(drag->GetTarget(), line, column)) {
 			error_log("GridLayout initiated drag for(%s), but doesn't contain it in the grid!", drag->GetTarget()->GetName().c_str());
 			//add the widget in it's new location?
-			if(!FindGridLocationAt((uint32)drag->GetCurrentMousePos().x, (uint32)drag->GetCurrentMousePos().y, line, column)) {
+			if(!FindGridLocationAt((uint32)drag->GetCurrentMousePos().x, 
+				(uint32)drag->GetCurrentMousePos().y, line, column)) 
+			{
 				error_log("Couldn't add widget to grid! Invalid coords(not inside the grid!)x: %u|y: %u",drag->GetCurrentMousePos().x, drag->GetCurrentMousePos().y);
 				drag->ResetPosition();
 				return false;
@@ -877,7 +879,9 @@ namespace gui
 		uint32 old_widget_col  = column;
 
 		//find it's new location in the grid
-		if(!FindGridLocationAt((uint32)drag->GetCurrentMousePos().x, (uint32)drag->GetCurrentMousePos().y, line, column)) {
+		if(!FindGridLocationAt((uint32)drag->GetCurrentMousePos().x, 
+			(uint32)drag->GetCurrentMousePos().y, line, column)) 
+		{
 			error_log("Couldn't add widget to grid! Invalid coords(not inside the grid!)x: %u|y: %u",drag->GetCurrentMousePos().x, drag->GetCurrentMousePos().y);
 			drag->ResetPosition();
 			return false;

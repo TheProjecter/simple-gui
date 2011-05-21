@@ -38,7 +38,7 @@ namespace gui
 	Drag::Drag( gui::Widget* target, sf::Event* event):
 		  m_target(target), m_forceMove(true/*debug*/), m_type(Drag::Widget),
 		  m_minDragDist(5), m_status(NotStarted), m_focusTarget(NULL),
-		  m_dropStatus(NotStarted)
+		  m_dropStatus(NotStarted), m_stopped(false)
 	{
 		if(m_target) {
 			m_forceDragFlags = /*m_target->GetDropFlags()*/ Anywhere; //debug
@@ -131,6 +131,8 @@ namespace gui
 			else m_dropStatus = Failed;
 		}
 
+		m_stopped = true;
+
 		return true;
 	}
 
@@ -173,5 +175,10 @@ namespace gui
 		assert(m_target);
 
 		m_target->SetPos(m_startPos,true);
+	}
+
+	bool Drag::IsStopped() const
+	{
+		return m_stopped;
 	}
 }

@@ -55,7 +55,10 @@ namespace gui
 		uint32 GetType() const;
 
 		void ResetPosition();
+		
 		bool StopDrag();
+		bool IsStopped() const;
+
 		bool IsRunning() const;
 		bool IsFinished() const;
 
@@ -85,6 +88,7 @@ namespace gui
 		gui::Widget* m_focusTarget;	//the *appropriate* widget over which the mouse hovers
 
 		bool m_forceMove;			//forces any widget to move irregardless of flags
+		bool m_stopped;				//if stopped, the drag will be deleted at next update
 	private:
 		friend class GuiManager;
 	};
