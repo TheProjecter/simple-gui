@@ -91,6 +91,7 @@ namespace gui
 		void SetPanning(uint32 panning);
 		uint32 GetPanning() const;
 	private:
+		bool IsExtremity(uint32 row, uint32 col) const;
 		void ComputeCells();					//internally used to resize the cells
 		bool AddWidget(Widget* child);			//only internally used
 		bool RemoveWidget(Widget* widget);		//internally used as well
