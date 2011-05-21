@@ -115,6 +115,14 @@ namespace gui {
 		x = other.x; y = other.y;
 		w = other.w; h = other.h;
 	}
+
+	Rect::Rect( const sf::FloatRect& rect )
+	{
+		x = (int32)rect.Left; 
+		y = (int32)rect.Top; 
+		w = (int32)rect.GetWidth(); 
+		h = (int32)rect.GetHeight();
+	}
 	const Rect Rect::operator+( const Rect& other ) const
 	{
 		return Rect(*this) += other;
@@ -205,6 +213,17 @@ namespace gui {
 		this->x = x; this->y = y;
 	}
 
+	Rect::operator sf::FloatRect() const
+	{
+		sf::FloatRect temp; 
+
+		temp.Left	= (float)x; 
+		temp.Top	= (float)y;
+		temp.Right	= (float)x+w; 
+		temp.Bottom = (float)y+h; 
+
+		return temp;
+	}
 	void Functor::operator()()
 	{
 		std::cout << "Debugging Functor()" << std::endl;

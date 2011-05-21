@@ -11,6 +11,7 @@ namespace gui {
 		void SetBackgroundColor(sf::Color color);
 		void SetPos(int x, int y, bool forceMove = false, bool save = true);
 		void SetPasswordField(bool flag);
+		void Resize(int w, int h,bool save /* = true */);
 	private:
 		void Draw() const;
 		void _SetCursorPos();
@@ -22,6 +23,10 @@ namespace gui {
 		void TestSizeErrors(bool moveStartIndex = false);
 		void OnKeyPressed(sf::Event* event);
 		void OnTextEntered(sf::Event* event);
+
+		void OnClickPressed(sf::Event* event);
+		
+		uint32 CalculateIndexForPos(int32 x, int32 y);
 
 		sf::String m_visibleText;
 		std::string m_totalText;
