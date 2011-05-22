@@ -18,7 +18,8 @@ namespace gui {
 					m_individualTheme(false), m_hovering(false),
 					m_hoverTarget(NULL), m_solid(false), m_allowSave(true),
 					m_sprite(NULL),m_dropFlags(Drag::WidgetOnly),
-					m_dead(false),m_loading(false)
+					m_dead(false),m_loading(false),m_doubleClickDiff(0),
+					m_doubleClickActivated(false), m_doubleClickTime(500)
 	{
 		m_mediator.SetCurrentPath(m_name);
 
@@ -44,9 +45,10 @@ namespace gui {
 		m_isFocus(true),m_transparency(200), m_individualTheme(false),
 		m_hovering(true),m_hoverTarget(NULL), m_solid(false), 
 		m_allowSave(true), m_sprite(NULL),m_dropFlags(Drag::WidgetOnly),
-		m_dead(false),m_loading(false)
+		m_dead(false),m_loading(false),m_doubleClickDiff(0),
+		m_doubleClickActivated(false), m_doubleClickTime(500)
 	{
-		this->m_name = name;
+		SetName(name);
 		m_mediator.SetCurrentPath(name);
 
 		//set theme/default colors
@@ -145,6 +147,8 @@ namespace gui {
 	{
 		m_parent = parent;
 
+		m_mediator.SetCurrentPath(GetWidgetPath());
+
 		//error checking for positioning since you now got a new parent
 		SetPos(m_rect.x, m_rect.y,true);
 	}
@@ -163,6 +167,7 @@ namespace gui {
 
 	void Widget::Resize( int w, int h , bool save /*=true*/)
 	{
+		Rect temp = m_rect;
 		m_rect.w = w; 
 		m_rect.h = h; 
 
@@ -178,7 +183,7 @@ namespace gui {
 			m_settings.SetUint32Value("width", m_rect.w);
 			m_settings.SetUint32Value("height", m_rect.h);
 		}
-		OnResize();
+		OnResize(m_rect);
 		InitGraphics();
 		UpdateClipArea();
 	}
@@ -240,7 +245,7 @@ namespace gui {
 			m_shape.SetPosition(m_rect.GetPos());
 		else m_sprite->SetPosition(m_rect.GetPos());
 
-		OnMove();
+		OnMove(temp);
 		UpdateClipArea();
 	}
 
@@ -383,6 +388,10 @@ namespace gui {
 		if(m_hoverTarget && m_hoverTarget->m_dead)
 			m_hoverTarget = NULL;
 
+		if(m_doubleClickActivated) {
+			m_doubleClickDiff -= diff;
+		}
+
 		//handle the events..also takes care of child widget events
 		_HandleEvents();
 
@@ -517,15 +526,21 @@ namespace gui {
 
 	void Widget::HideChildren()
 	{
+		//post a OnHide event
+		OnHide();
+
+		//make your children post the same event, since they're invisble too now
 		for(uint32 i=0; i<m_widgets.size(); i++) {
-			m_widgets[i]->OnHide();
+			m_widgets[i]->HideChildren();
 		}
 	}
 
 	void Widget::ShowChildren()
 	{
+		OnShow();
+
 		for(uint32 i=0; i<m_widgets.size(); i++) {
-			m_widgets[i]->OnShow();
+			m_widgets[i]->ShowChildren();
 		}
 	}
 
@@ -536,22 +551,7 @@ namespace gui {
 
 	void Widget::_DispatchEvent( sf::Event* event )
 	{
-		
-// 		//send the event to the highest order parent widget
-// 		Widget* pWidget = m_parent;
-// 
-// 		while(pWidget && pWidget->GetParent())
-// 			pWidget = pWidget->GetParent();
-
-		//notify the event
-		this->OnEvent(event);
-
-// 		//also notify the highest order parent widget if any
-// 		if(pWidget) {
-// 			pWidget->OnChildEvent(this,event);
-// 		}
-		
-		
+		OnEvent(event);
 	}
 	
 	void Widget::OnEvent( sf::Event* event )
@@ -568,6 +568,7 @@ namespace gui {
 		}
 	}
 
+	//deprecated
 	void Widget::_StartDrag( int x, int y )
 	{
 		m_drag = true;
@@ -636,6 +637,23 @@ namespace gui {
 
 									//a child received the event.. so register it
 									itr->second->RegisterEvent(event);
+	
+									//another click happened.. is it within time?
+									if(m_doubleClickActivated) {
+										if(m_doubleClickDiff < 0) {
+											//it was not within time.. double click expired
+											m_doubleClickDiff = m_doubleClickTime;
+											m_doubleClickActivated = false;
+										} else {
+											itr->second->OnDoubleClick(event);
+											//reset double click
+											m_doubleClickActivated = false;
+											m_doubleClickDiff = m_doubleClickTime;
+										}
+									} else { //first click.. activate the double click
+										m_doubleClickActivated = true;
+										m_doubleClickDiff = m_doubleClickTime;
+									}
 									break;
 								} 
 							}
@@ -853,6 +871,27 @@ namespace gui {
 				this->Show();
 			else this->Hide();
 		}
+		if(m_settings.HasUint32Value("movable")) {
+			if(m_settings.GetUint32Value("movable")) {
+				this->SetMovable(true);
+			} else this->SetMovable(false);
+		}
+		if(m_settings.HasUint32Value("vpolicy")) {
+			uint32 i = m_settings.GetUint32Value("vpolicy");
+			if(i > MaximumExpand) {
+				error_log("Widget(\"%s\") contain an invalid size policy! %u",m_name.c_str(),i);
+			} else {
+				SetVerticalPolicy(SizePolicy(i));
+			}
+		}
+		if(m_settings.HasUint32Value("hpolicy")) {
+			uint32 i = m_settings.GetUint32Value("hpolicy");
+			if(i > MaximumExpand) {
+				error_log("Widget(\"%s\") contain an invalid size policy! %u",m_name.c_str(),i);
+			} else {
+				SetHorizontalPolicy(SizePolicy(i));
+			}
+		}
 
 		if(resize) this->Resize(temp.w, temp.h);
 		if(setpos) this->SetPos(temp.x, temp.y,true);
@@ -911,14 +950,14 @@ namespace gui {
 		return m_settings;
 	}
 
-	void Widget::OnResize()
+	void Widget::OnResize(const Rect& oldRect)
 	{
-		m_mediator.PostEvent(new gui::OnResize(this));
+		m_mediator.PostEvent(new gui::OnResize(this,oldRect));
 	}
 
-	void Widget::OnMove()
+	void Widget::OnMove(const Rect& oldRect)
 	{
-		m_mediator.PostEvent(new gui::OnMove(this));
+		m_mediator.PostEvent(new gui::OnMove(this,oldRect));
 	}
 
 	void Widget::OnShow()
@@ -1420,5 +1459,22 @@ namespace gui {
 	bool Widget::IsLoading() const
 	{
 		return m_loading;
+	}
+
+	void Widget::SetVerticalPolicy( SizePolicy policy )
+	{
+		m_settings.SetUint32Value("vpolicy",policy);
+		m_verticalPolicy = policy;
+	}
+
+	void Widget::SetHorizontalPolicy( SizePolicy policy )
+	{
+		m_settings.SetUint32Value("hpolicy", policy);
+		m_horizontalPolicy = policy;
+	}
+
+	void Widget::OnDoubleClick( sf::Event* event )
+	{
+		m_mediator.PostEvent(new gui::OnDoubleClick(this));
 	}
 }

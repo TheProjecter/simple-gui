@@ -17,11 +17,18 @@ namespace gui
 	void Drag::SetPos( const sf::Vector2f& pos )
 	{
 		if(m_status == NotStarted) {
+
+			//widget isn't draggable
+			if(!m_forceMove && m_target && !m_target->IsMovable()) {
+				return;
+			}
+
 			float dist = ComputeDistance(pos,m_startPos);
 
 			//enable the drag
-			if((uint32)dist > m_minDragDist ) 
+			if((uint32)dist > m_minDragDist ) {
 				m_status = Running;
+			}
 		} 
 		
 		if(m_status == Running) {

@@ -14,6 +14,9 @@ namespace gui
 
 		void SetTitleName(const std::string& title_name);
 
+		void Minimize();	//if already minimized.. will restore
+		void Maximize();	//if already maximized.. will restore
+
 	protected:
 		virtual void Update(float diff);
 

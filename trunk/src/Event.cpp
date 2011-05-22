@@ -83,14 +83,28 @@ namespace gui
 	}
 
 
-	OnResize::OnResize( Widget* widget ) : WidgetEvent(widget)
+	OnResize::OnResize( Widget* widget,const Rect& oldRect ) : 
+				WidgetEvent(widget)
 	{
 		m_type = gui::events::OnResize;
+		m_oldRect = oldRect;
 	}
 
-	OnMove::OnMove( Widget* widget ) : WidgetEvent(widget)
+	const Rect& OnResize::GetOldRect() const
+	{
+		return m_oldRect;
+	}
+
+	OnMove::OnMove( Widget* widget,const Rect& oldRect ) : 
+			WidgetEvent(widget)
 	{
 		m_type = gui::events::OnMove;
+		m_oldRect = oldRect;
+	}
+
+	const Rect& OnMove::GetOldRect() const
+	{
+		return m_oldRect;
 	}
 
 	Event::Event() : m_refCount(0),m_type(WIDGET)
@@ -132,4 +146,10 @@ namespace gui
 		return m_value;
 	}
 
+
+	OnDoubleClick::OnDoubleClick( Widget* widget /*= NULL*/ ):
+			WidgetEvent(widget)
+	{
+		m_type = events::OnDoubleClick;
+	}
 }

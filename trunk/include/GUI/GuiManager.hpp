@@ -47,6 +47,8 @@ namespace gui {
 		void SaveUI(const char* filename);
 		void LoadUI(const char* filename);
 
+		bool IsEditEnabled() const;
+
 		void RegisterFactory(AbstractFactory* userFactory);
 		void RegisterDrag(Drag* drag);
 
@@ -57,6 +59,8 @@ namespace gui {
 
 		gui::uint32 GetOldWidth() const;
 		gui::uint32 GetOldHeight() const;
+
+		void SetIsEditEnabled(bool flag) { m_editEnabled = flag; } //TODO: DEBUG ONLY! Need to remove it!
 	private:
 		friend class GuiMgrParser;
 		typedef std::map<uint32, Widget*> WidgetList;
@@ -69,7 +73,8 @@ namespace gui {
 		Widget* m_hoverTarget;
 		sf::RenderWindow& m_window;			//pointer to the window we're working on
 		uint32 m_hotSpotX, m_hotSpotY;		//used for dragging			
-		bool m_drag;						//flag for determining whether drag is happening
+		bool m_drag;						//TODO: deprecated
+		bool m_editEnabled;
 		std::vector<AbstractFactory*> m_factories;
 		GuiMgrParser m_parser;
 		mutable Mediator m_mediator;

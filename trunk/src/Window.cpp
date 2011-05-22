@@ -26,7 +26,7 @@ namespace gui
 		AddWidget(titlebar);
 
 		m_mediator.Connect(titlebar,"default",gui::events::OnDrag,false);
-
+		m_mediator.Connect(titlebar,"default",events::OnDoubleClick,false);
 
 	}
 
@@ -38,33 +38,20 @@ namespace gui
 			if(e->GetType() == sf::Event::MouseButtonPressed) {
 				WidgetEvent* w = (WidgetEvent*)e;
 				if(w->GetWidget()->GetName() == "close") {
-					//commit suicide
 					Kill();
 					debug_log("Closing window \"%s\"",m_name.c_str());
 				} else if(w->GetWidget()->GetName() == "min") {
-					m_minimized = ! m_minimized;
-
-					UpdateClipArea();
-					debug_log("Minimizing window \"%s\"",m_name.c_str());
+					Minimize();
 				} else if(w->GetWidget()->GetName() == "max") {
-					if(!m_maximized) {
-						m_oldSizeMax = m_rect;
-						SetPos(0,0,true);
-						Resize(s_gui->GetWindow().GetWidth(),s_gui->GetWindow().GetHeight());
-						m_maximized = true;
-					} else { //restored
-						m_rect = m_oldSizeMax;
-						SetPos(m_rect.x,m_rect.y,true);
-						Resize(m_rect.w,m_rect.h);
-						m_maximized = false;
-					}
-					debug_log("Maximizing window \"%s\"", m_name.c_str());
+					Maximize();
 				} else if(w->GetWidget()->GetName() == "help") {
 					debug_log("Requiring help from window \"%s\"",m_name.c_str());
 				}
 			} else if(e->GetType() == gui::events::OnDrag) {
 				Drag* drag = ((OnDrag*)e)->GetDrag();
 				SetPos(drag->GetCurrentPos());
+			} else if(e->GetType() == events::OnDoubleClick) {
+				Maximize();
 			}
 		}
 	}
@@ -168,5 +155,29 @@ namespace gui
 		if(buttons & TitleBar::QUESTION)
 			m_mediator.Connect(titlebar,"help", "default",sf::Event::MouseButtonPressed,false);
 
+	}
+
+	void Window::Minimize()
+	{
+		m_minimized = ! m_minimized;
+
+		UpdateClipArea();
+		debug_log("Minimizing window \"%s\"",m_name.c_str());
+	}
+
+	void Window::Maximize()
+	{
+		if(!m_maximized) {
+			m_oldSizeMax = m_rect;
+			SetPos(0,0,true);
+			Resize(s_gui->GetWindow().GetWidth(),s_gui->GetWindow().GetHeight());
+			m_maximized = true;
+		} else { //restored
+			m_rect = m_oldSizeMax;
+			SetPos(m_rect.x,m_rect.y,true);
+			Resize(m_rect.w,m_rect.h);
+			m_maximized = false;
+		}
+		debug_log("Maximizing window \"%s\"", m_name.c_str());
 	}
 }

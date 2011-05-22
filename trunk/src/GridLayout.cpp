@@ -22,9 +22,30 @@ namespace gui
 	{
 		//nothing to do really...
 	}
-	bool GridLayout::AddWidgetToGrid( Widget* widget, uint32 line, uint32 column )
+	bool GridLayout::AddWidgetToGrid( Widget* widget, uint32 line, 
+			uint32 column, uint32 rowspan/*=1*/, uint32 colspan/*=1*/ )
 	{
-		assert(widget && m_items.size() > line && m_items[line].size() > column);
+		//assert(widget && m_items.size() > line && m_items[line].size() > column);
+
+		if(line + rowspan > m_items.size()) {
+			m_items.resize(line + rowspan);
+			uint32 maxcols = 0;
+			//get the biggest column count
+			for(uint32 i=0; i<m_items.size(); i++) {
+				maxcols = std::max(maxcols,m_items[i].size());
+			}
+			//resize them all to be the same no. of columns if needed
+			for(uint32 i=0; i<m_items.size(); i++) {
+				if(m_items[i].size() != maxcols) {
+					m_items[i].resize(maxcols);
+				}
+			}
+		}
+		if( column + colspan > m_items[0].size()) {
+			for(uint32 i=0; i < m_items.size(); i++) {
+				m_items[i].resize(column + colspan);
+			}
+		}
 
 		LayoutItem& layout_item = m_items[line][column];
 		if(!layout_item.empty() || layout_item.IsExpand()) {
@@ -36,7 +57,29 @@ namespace gui
 		if(!Widget::AddWidget(widget)) 
 			return false;
 
-		m_items[line][column].SetWidget(widget);	
+		//update every line we *own* to notify they're no longer occupied
+		for(uint32 k=line+1; k<line+layout_item.GetRowSpan(); k++) {
+			m_items[k][column].SetExpand(false);
+		}
+
+		//update every column we *own* to notify they're no longer occupied
+		for(uint32 k=column+1; k<column+layout_item.GetColSpan(); k++) {
+			m_items[line][k].SetExpand(false);
+		}
+
+		layout_item = LayoutItem(widget,rowspan,colspan);
+
+
+		//update every line we *own* to notify they're no longer occupied
+		for(uint32 k=line+1; k<line+layout_item.GetRowSpan(); k++) {
+			m_items[k][column].SetExpand(true);
+		}
+
+		//update every column we *own* to notify they're no longer occupied
+		for(uint32 k=column+1; k<column+layout_item.GetColSpan(); k++) {
+			m_items[line][k].SetExpand(true);
+		}
+
 		
 
 		//adding widgets can also lead to useless redundant rows/columns!
@@ -59,6 +102,7 @@ namespace gui
 		RemoveEmptyColumnAndLines();
 
 		ComputeCells();
+
 		return widget;
 	}
 
@@ -1187,12 +1231,13 @@ namespace gui
 		m_colspan = count;
 	}
 
-	LayoutItem::LayoutItem( Widget* widget /*= NULL*/, bool expanded /*= false*/ )
+	LayoutItem::LayoutItem( Widget* widget /*= NULL*/,uint32 rowspan/*=1*/, 
+							uint32 colspan/*=1*/ )
 	{
 		m_widget = widget;
-		m_expanded = expanded;
-		m_rowspan = 1;
-		m_colspan = 1;
+		m_expanded = false;
+		m_rowspan = rowspan;
+		m_colspan = colspan;
 	}
 
 	void LayoutItem::Draw( sf::RenderWindow& window ) const
@@ -1233,4 +1278,133 @@ namespace gui
 		}
 		return false;
 	}
+
+	bool GridLayout::IsCollision( const Rect& rect ) const
+	{
+		if(!s_gui->IsEditEnabled()) {
+			//normally you don't care about events inside the grid
+			//only if inside a child of the grids..unless in edit mode
+			for(WidgetList::reverse_iterator it = m_widgets.rbegin();
+					it != m_widgets.rend(); it++) 
+			{
+				if(it->second->IsCollision(rect)) {
+					return true;
+				}
+			}
+			return false;
+		} else {
+			return Widget::IsCollision(rect);
+		}
+	}
+
+	void GridLayout::SetParent( Widget* parent )
+	{
+		//stop listening to the old parent's events
+		if(m_parent) {
+			m_mediator.Disconnect(m_parent,"default",events::OnResize);
+		}
+
+		Widget::SetParent(parent);
+		
+		if(!parent) return;
+
+		if(GetVerticalPolicy()	!= Widget::Fixed   ||
+		   GetHorizontalPolicy()!= Widget::Fixed)
+		{
+			m_mediator.Connect(parent,"default",events::OnResize,false);
+		}
+		ResizeFromParent();
+	}
+
+	void GridLayout::Update( float diff )
+	{
+		Widget::Update(diff);
+			
+		Event* e = NULL;
+		while(e = m_mediator.GetEvent()) {
+			if(e->GetType() != events::OnResize) {
+				error_log("Received unsupported event type: %u", e->GetType());
+				continue;
+			}
+			gui::OnResize* ev = (gui::OnResize*)e;
+			Widget* parent = ev->GetWidget();
+			Rect new_rect;
+			if(parent == m_parent) {
+				const Rect& prect = parent->GetRect();
+				const Rect& oldRect = ev->GetOldRect();
+				ResizeFromParent(oldRect);	
+			}
+		}
+	}
+
+	void GridLayout::ResizeFromParent( Rect oldRect /*= Rect(0,0,0,0)*/ )
+	{
+		if(!m_parent) {
+			return;
+		}
+		Rect new_rect;
+		const Rect& prect = m_parent->GetRect();
+
+		if(!oldRect) {
+			oldRect = prect;
+		}
+
+		switch(GetHorizontalPolicy())
+		{
+		case Widget::MinimumExpand:
+		case Widget::MaximumExpand:
+			new_rect.w = prect.w;
+			new_rect.x = m_rect.x;	//don't move it
+			new_rect.y = m_rect.y;
+			break;
+		case Widget::ScaledExpand:	
+			{
+				float scale = m_rect.w / (float) oldRect.w;
+				float posXScale = m_rect.x / (float) oldRect.w;
+				float posYScale = m_rect.y / (float) oldRect.h;
+
+				new_rect.x = uint32(new_rect.w * posXScale);
+				new_rect.y = uint32(new_rect.h * posYScale);
+
+				new_rect.w = uint32(prect.w * scale);
+			}
+			break;
+
+		}
+
+		switch(GetVerticalPolicy())
+		{
+		case Widget::MinimumExpand:
+		case Widget::MaximumExpand:
+			new_rect.h = prect.h;
+
+			new_rect.x = m_rect.x;	//don't move it
+			new_rect.y = m_rect.y;
+			break;
+		case Widget::ScaledExpand:	
+			{
+				float scale = m_rect.h / (float) oldRect.h;
+				float posXScale = m_rect.x / (float) oldRect.w;
+				float posYScale = m_rect.y / (float) oldRect.h;
+
+				new_rect.x = uint32(new_rect.w * posXScale);
+				new_rect.y = uint32(new_rect.h * posYScale);
+
+				new_rect.h = uint32(prect.h * scale);
+			}
+			break;
+
+		}
+		Resize(new_rect.w, new_rect.h,true);
+		SetPos(new_rect.x, new_rect.y,true);
+	}
+
+	void GridLayout::Resize( int w, int h,bool save /* = true */ )
+	{
+		Widget::Resize(w,h,save);
+
+		ComputeCells();
+	}
+
 }
+

@@ -10,13 +10,13 @@ namespace gui
 	TitleBar::TitleBar( const std::string& text )
 	{
 		//there can only be ONE titlebar per window, and this will be its name
-		m_name = "my_titlebar";
+		SetName("my_titlebar");
 		m_type = TITLE_BAR;
 
 		m_buttonStyle = DEFAULT;
 
 		//title-bars can't be moved!
-		m_movable = false;
+		//m_movable = false;
 
 		//TODO: hardcoded height? FIXIT!
 		m_rect.h = 15;
