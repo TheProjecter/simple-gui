@@ -93,6 +93,15 @@ const std::string& gui::TextArea::GetText() const
 {
 	return m_text;
 }
+
+std::string gui::TextArea::GetTextFromLine( uint32 line ) const
+{
+	if(line > m_lines.size()) {
+		return "";
+	}
+	return m_lines[line].GetText();
+}
+
 inline float char_width(char* c, const sf::Font& font)
 {
 	sf::String temp;
@@ -614,6 +623,15 @@ void gui::Word::SetPos( int x, int y )
 		width += m_char[i].GetRect().GetWidth();
 	}
 }
+
+std::string gui::Word::GetText() const
+{
+	std::string temp;
+	for(uint32 i=0; i<m_char.size(); i++) {
+		temp += m_char[i].GetText();
+	}
+	return temp;
+}
 float gui::Line::GetWidth() const
 {
 	float temp = 0;
@@ -674,3 +692,13 @@ gui::uint32 gui::Line::GetLineSpacing() const
 	}
 	return max;
 }
+
+std::string gui::Line::GetText() const
+{
+	std::string temp;
+	for(uint32 i=0; i<m_words.size(); i++) {
+		temp += m_words[i].GetText();
+	}
+	return temp;
+}
+

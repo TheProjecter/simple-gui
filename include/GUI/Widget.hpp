@@ -69,7 +69,6 @@ namespace gui {
 		bool CanDrag(int x, int y) const;
 
 		void SetBackgroundColor(sf::Color color);
-		virtual void ReloadSettings();
 		Mediator& GetMediator() const;
 
 		virtual void Resize(int w, int h,bool save = true);
@@ -212,6 +211,7 @@ namespace gui {
 		void Draw(const sf::Image* image);
 		void SetFocus(Widget* widget);
 		virtual void ReloadTheme();
+		virtual void ReloadSettings();
 		virtual void InitGraphics();
 		virtual void UpdateClipArea();
 
