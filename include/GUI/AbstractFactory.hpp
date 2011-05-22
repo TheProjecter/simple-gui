@@ -10,6 +10,7 @@ namespace gui
 	class AbstractFactory
 	{
 	public:
+		AbstractFactory() {}
 		virtual ~AbstractFactory() {}
 
 		//widget creation

@@ -12,7 +12,7 @@ namespace gui {
 				m_hotSpotX(0),m_hotSpotY(0), m_focus(NULL), 
 				m_drag(false),index(0),m_theme(NULL),m_hoverTarget(NULL),
 				m_curDrag(NULL),m_oldWidth(window.GetWidth()),
-				m_oldHeight(window.GetHeight())
+				m_oldHeight(window.GetHeight()),m_editEnabled(false)
 	{
 		m_parser.SetGui(this);
 		m_factories.push_back(new DefaultFactory());
@@ -20,15 +20,6 @@ namespace gui {
 		Mediator::s_currentGui = this;
 	}
 
-// 	GuiManager::GuiManager(): m_window(NULL), m_hotSpotX(0),m_hotSpotY(0),
-// 						m_focus(NULL), m_drag(false),index(0),m_theme(NULL),
-// 						m_hoverTarget(NULL), m_curDrag(NULL)
-// 	{
-// 		m_parser.SetGui(this);
-// 		m_factories.push_back(new DefaultFactory());
-// 		Widget::s_gui = this;
-// 		Mediator::s_currentGui = this;
-// 	}
 	GuiManager::~GuiManager()
 	{
 		ClearWidgets();
@@ -193,7 +184,7 @@ namespace gui {
 		m_events.clear();
 
 		//draw the drag if any
-		if(m_curDrag) {
+		if(m_curDrag && m_curDrag->IsRunning()) {
 			Widget* parent = m_curDrag->GetTargetParent();
 			if(!parent || parent->IsDead()) return;
 
@@ -680,5 +671,10 @@ namespace gui {
 	gui::uint32 GuiManager::GetOldHeight() const
 	{
 		return m_oldHeight;
+	}
+
+	bool GuiManager::IsEditEnabled() const
+	{
+		return m_editEnabled;
 	}
 }

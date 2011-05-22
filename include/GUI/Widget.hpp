@@ -110,10 +110,6 @@ namespace gui {
 		void ShowChildren();
 
 		bool IsLoading() const;
-
-		virtual bool IsCollision(const Rect& rect) const;
-		virtual bool IsCollision(const Rect& rect, sf::Vector2f& normal) const;
-		bool IsFocus() const;
 		bool IsHovering() const;
 
 		sf::RenderWindow* GetWindow() const;
@@ -129,7 +125,14 @@ namespace gui {
 
 		SizePolicy GetVerticalPolicy() const;
 		SizePolicy GetHorizontalPolicy() const;
+
+		void SetVerticalPolicy(SizePolicy policy);
+		void SetHorizontalPolicy(SizePolicy policy);
+
 		virtual void Draw() const;
+
+		virtual bool IsCollision(const Rect& rect) const;
+		virtual bool IsCollision(const Rect& rect, sf::Vector2f& normal) const;
 	protected:
 		/* Attributes */
 		uint32 m_type;						//the type of the widget		
@@ -165,6 +168,11 @@ namespace gui {
 		bool m_dead;						//if widget committed suicided it will be removed at the next updated
 		std::vector<Widget*> m_freeWidgets;	//widgets that will be deleted at each updated, if any
 		
+		//Double Click attributes.. maybe move these to their own object?
+		float m_doubleClickDiff;			//diff timer for double click
+		uint16 m_doubleClickTime;			//diff amount of time between click to be considered a double click
+		bool m_doubleClickActivated;
+
 		SizePolicy m_verticalPolicy;		//the vertical resize policy
 		SizePolicy m_horizontalPolicy;		//the horizontal resize policy
 		//Rect m_minSize;		//the minimum the the widget won't go pass
@@ -177,8 +185,8 @@ namespace gui {
 		static void ConvertCoords(sf::Vector2f& coords);
 
 		/* Widget specific events */
-		virtual void OnResize();
-		virtual void OnMove();
+		virtual void OnResize(const Rect& oldRect);
+		virtual void OnMove(const Rect& oldRect);
 		virtual void OnShow();
 		virtual void OnHide();
 		virtual void OnDestroy();
@@ -191,6 +199,7 @@ namespace gui {
 		virtual void OnEvent(sf::Event* event);
 		virtual void OnClickPressed(sf::Event* event);
 		virtual void OnClickReleased(sf::Event* event);
+		virtual void OnDoubleClick(sf::Event* event);
 		virtual void OnKeyPressed(sf::Event* event);
 		virtual void OnKeyReleased(sf::Event* event);
 		virtual void OnOtherEvents(sf::Event* event);
@@ -221,6 +230,8 @@ namespace gui {
 		void ResizeClipArea(uint32 newWidth, uint32 newHeight);
 		virtual Rect NormalizeClipArea() const;
 		virtual Rect NormalizeClipAreaView() const;
+
+		bool IsFocus() const;
 
 		virtual Drag* CreateDrag(sf::Event* event);
 

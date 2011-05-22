@@ -36,6 +36,7 @@ namespace gui {
 
 			/* Widget specific events */
 			OnResize = 16 /*sf::Event::Count*/,
+			OnDoubleClick,
 			OnMove,
 			OnDrag,
 			OnShow,

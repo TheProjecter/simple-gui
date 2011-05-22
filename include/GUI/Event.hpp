@@ -22,7 +22,7 @@ namespace gui
 	class SfmlEvent : public Event
 	{
 	public:
-		SfmlEvent(sf::Event* event = NULL);
+		SfmlEvent(sf::Event* event);
 
 	protected:
 		sf::Event* m_event;
@@ -31,7 +31,7 @@ namespace gui
 	class WidgetEvent : public Event
 	{
 	public:
-		WidgetEvent(Widget* widget = NULL);
+		WidgetEvent(Widget* widget);
 
 		Widget* GetWidget() const;
 	protected:
@@ -41,13 +41,19 @@ namespace gui
 	class OnClickPressed : public WidgetEvent
 	{
 	public:
-		OnClickPressed(Widget* widget = NULL);
+		OnClickPressed(Widget* widget);
 	};
 
 	class OnClickReleased : public WidgetEvent
 	{
 	public:
-		OnClickReleased(Widget* widget = NULL);
+		OnClickReleased(Widget* widget);
+	};
+
+	class OnDoubleClick : public WidgetEvent
+	{
+	public:
+		OnDoubleClick(Widget* widget);
 	};
 
 	class OnKeyPressed : public WidgetEvent
@@ -71,49 +77,55 @@ namespace gui
 	class OnFocus : public WidgetEvent 
 	{
 	public:
-		OnFocus(Widget* widget = NULL);
+		OnFocus(Widget* widget);
 	};
 
 	class OnFocusLost : public WidgetEvent 
 	{
 	public:
-		OnFocusLost(Widget* widget = NULL);
+		OnFocusLost(Widget* widget);
 	};
 
 	class OnHover : public WidgetEvent 
 	{
 	public:
-		OnHover(Widget* widget = NULL);
+		OnHover(Widget* widget);
 	};
 
 	class OnHoverLost: public WidgetEvent 
 	{
 	public: 
-		OnHoverLost(Widget* widget = NULL);
+		OnHoverLost(Widget* widget);
 	};
 
 	class OnShow : public WidgetEvent
 	{
 	public:
-		OnShow(Widget* widget = NULL);
+		OnShow(Widget* widget);
 	};
 
 	class OnHide : public WidgetEvent
 	{
 	public:
-		OnHide(Widget* widget = NULL);
+		OnHide(Widget* widget);
 	};
 
 	class OnResize : public WidgetEvent
 	{
 	public:
-		OnResize(Widget* widget = NULL);
+		OnResize(Widget* widget,const Rect& oldRect);
+		const Rect& GetOldRect() const;
+	private:
+		Rect m_oldRect;
 	};
 
 	class OnMove : public WidgetEvent
 	{
 	public:
-		OnMove(Widget* widget = NULL);
+		OnMove(Widget* widget,const Rect& oldRect);
+		const Rect& GetOldRect() const;
+	private:
+		Rect m_oldRect;
 	};
 	class OnValueChanged : public WidgetEvent
 	{

@@ -184,6 +184,39 @@ namespace gui
 		m_currentPath = path;
 	}
 
+	bool Mediator::Disconnect( Widget* with, const std::string& my_listener, uint32 eventType )
+	{
+		if(!with) return false;
+		Dispatcher& d = with->GetMediator().GetDispatcher();
+		
+		return d.UnRegisterListner(eventType,GetListener(my_listener));
+	}
+
+	bool Mediator::Disconnect( const std::string& path, const std::string& my_listner, uint32 eventType )
+	{
+		if(!s_currentGui) {
+			error_log("Unable to complete query! Couldn't find the current gui manager!");
+			return false;
+		}
+		std::string temp = m_currentPath.size() ? m_currentPath + "." + path 
+							: path; 
+
+		Widget* w = s_currentGui->QueryWidget(temp);
+
+		return Disconnect(w, my_listner,eventType);
+	}
+
+	bool Mediator::Disconnect( Widget* current, const std::string& path, const std::string& my_listener, uint32 eventType )
+	{
+		if(!current) {
+			error_log("Unable to complete query! Couldn't find the current gui manager!");
+			return false;
+		}
+		Widget* w = current->QueryWidget(path);
+
+		return Disconnect(w, my_listener, eventType);
+	}
+
 	bool Dispatcher::CaresAbout( uint32 eventType )
 	{
 		return ((m_listeners.find(eventType) != m_listeners.end()) ||	//particular interests...

@@ -72,7 +72,7 @@ namespace gui
 		std::string GetTextFromLine(uint32 line) const;
 		const std::string& GetText() const;
 		void Resize(int w, int h, bool save = true);
-		void SetPos(int x, int y, bool forceMove  = false ,bool save=true);
+		void SetPos(int x, int y, bool forceMove = false, bool save=true);
 	private:
 		std::string m_text;
 		std::vector<Line> m_lines;

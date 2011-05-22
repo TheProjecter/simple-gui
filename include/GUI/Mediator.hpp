@@ -89,6 +89,21 @@ namespace gui
 					const std::string& my_listener, uint32 eventType,
 					bool saveConnection = true);
 
+		//disconnects the current mediator to the widget passed as parameter
+		//to the specific eventType
+		bool Disconnect(Widget* with, const std::string& my_listener, 
+						uint32 eventType);
+
+		//disconnects the current mediator to the widget found by executing
+		//the query. The widget must be registered in the gui mgr to work!
+		bool Disconnect(const std::string& path, const std::string& my_listner,
+						uint32 eventType);
+
+		//disconnects the current mediator to the widget found by executing the
+		//query starting from the current widget passed by parameter
+		bool Disconnect(Widget* current, const std::string& path, 
+			const std::string& my_listener, uint32 eventType);
+
 		void SaveConnections(TiXmlNode* node) const;
 		void ClearConnections();
 		void SetCurrentPath(const std::string& path);

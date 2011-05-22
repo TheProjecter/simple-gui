@@ -26,7 +26,7 @@ namespace gui
 			LeftCollision,		//collided with the left part of the rect
 			RightCollision		//collided with the right part of the rect
 		};
-		LayoutItem(Widget* widget = NULL, bool expanded = false);
+		LayoutItem(Widget* widget = NULL, uint32 rowspan=1, uint32 colspan=1);
 		CollisionType IsCollision(int x, int y, uint32 panning) const;
 
 		void SetPos(int32 x, int32 y);
@@ -69,7 +69,7 @@ namespace gui
 		GridLayout();
 		~GridLayout();
 
-		bool AddWidgetToGrid(Widget* widget, uint32 line, uint32 column);
+		bool AddWidgetToGrid(Widget* widget, uint32 line, uint32 column, uint32 rowspan=1, uint32 colspan=1);
 		Widget* RemoveWidgetAt(uint32 line, uint32 column);
 
 		void AddLineBefore(uint32 line);
@@ -82,6 +82,7 @@ namespace gui
 		bool RemoveColumnIfEmpty(uint32 column);//returns true if deleted the col
 
 		void RemoveEmptyColumnAndLines();
+		void Resize(int w, int h,bool save /* = true */);
 
 		bool IsLineEmpty(uint32 line) const;
 		bool IsColumnEmpty(uint32 column) const;
@@ -90,8 +91,12 @@ namespace gui
 		
 		void SetPanning(uint32 panning);
 		uint32 GetPanning() const;
+
+		void SetParent(Widget* parent);
 	private:
 		bool IsExtremity(uint32 row, uint32 col) const;
+		bool IsCollision(const Rect& first) const;
+
 		void ComputeCells();					//internally used to resize the cells
 		bool AddWidget(Widget* child);			//only internally used
 		bool RemoveWidget(Widget* widget);		//internally used as well
@@ -99,7 +104,7 @@ namespace gui
 		void RemoveWidgetFromGrid(Widget* widget);
 		void Draw() const;
 
-		void SetPos(int x, int y, bool forceMove /* = false */, bool save /* = true */);
+		void SetPos(int x, int y, bool forceMove = false, bool save = true);
 		void SetPosForGrid();
 		bool HandleDragStop(Drag* drag);
 
@@ -107,12 +112,15 @@ namespace gui
 		LayoutItem::CollisionType FindGridLocationAt(int32 xpos, int32 ypos, uint32& line, uint32& column);
 
 		void ReloadSettings();
+		void ResizeFromParent( Rect oldRect = Rect(0,0,0,0));
 		
 		void SaveGridProperties();
 		void LoadGridProperties();
 		//lines		//columns
 		std::vector<std::vector<LayoutItem> > m_items;
 		uint32 m_panning;						//panning for widgets
+	protected:
+		void Update(float diff);
 	};
 
 
