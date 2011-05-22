@@ -706,8 +706,10 @@ namespace gui
 
 	void GridLayout::Draw() const
 	{
-		Widget::Draw();
+		if(!m_visible) return;
 
+		Widget::Draw();
+		
 		for(uint32 i=0; i<m_items.size(); i++) {
 			for(uint32 j=0; j<m_items[i].size(); j++) {
 				m_items[i][j].Draw(s_gui->GetWindow());

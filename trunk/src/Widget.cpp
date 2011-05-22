@@ -477,8 +477,10 @@ namespace gui {
 
 	void Widget::Draw() const
 	{
-		if(m_visible)
-			s_gui->GetWindow().Draw(m_shape);
+		if(!m_visible)
+			return;
+
+		s_gui->GetWindow().Draw(m_shape);
 
 		//also draw children if any
 		for(WidgetList::const_iterator it = m_widgets.begin(); it != m_widgets.end(); it++) {
@@ -516,14 +518,14 @@ namespace gui {
 	void Widget::HideChildren()
 	{
 		for(uint32 i=0; i<m_widgets.size(); i++) {
-			m_widgets[i]->Hide();
+			m_widgets[i]->OnHide();
 		}
 	}
 
 	void Widget::ShowChildren()
 	{
 		for(uint32 i=0; i<m_widgets.size(); i++) {
-			m_widgets[i]->Show();
+			m_widgets[i]->OnShow();
 		}
 	}
 
