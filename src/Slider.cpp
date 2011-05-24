@@ -41,7 +41,6 @@ namespace gui
 
 	void Slider::SetValue( int value )
 	{
-		error_log("Posted value=%d changed event!",value);
 
 		if(value < m_lowerLimit) {
 			value = m_lowerLimit;
