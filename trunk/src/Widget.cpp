@@ -400,29 +400,8 @@ namespace gui {
 				m_freeWidgets.push_back(it->second);
 			} else it->second->Update(diff);
 		}
-
-		//free the dead widgets
-		for(uint32 i=0;i<m_freeWidgets.size(); i++) {
-			uint32 guid = m_freeWidgets[i]->GetId();
-			WidgetList::iterator it = m_widgets.find(guid);
-			if(it != m_widgets.end()) {
-				Widget* widget = it->second;
-
-				//if the dying widget contains the current focus.. null it!
-				if(widget->ContainsWidget(m_focus)) {
-					m_focus = NULL;
-				} 
-				if(widget->ContainsWidget(m_hoverTarget)) {
-					m_hoverTarget = NULL;
-				}
-				delete it->second;
-				m_widgets.erase(it);
-			} else {
-				debug_log("Couldn't find widget \"%s\" for some reason.",m_freeWidgets[i]->GetName());
-			}
-		}
-
-		m_freeWidgets.clear();
+		
+		FreeDeadWidgets();
 		//update animations if needed, etc
 	}
 
@@ -1476,5 +1455,32 @@ namespace gui {
 	void Widget::OnDoubleClick( sf::Event* event )
 	{
 		m_mediator.PostEvent(new gui::OnDoubleClick(this));
+	}
+
+	void Widget::FreeDeadWidgets()
+	{
+
+		//free the dead widgets
+		for(uint32 i=0;i<m_freeWidgets.size(); i++) {
+			uint32 guid = m_freeWidgets[i]->GetId();
+			WidgetList::iterator it = m_widgets.find(guid);
+			if(it != m_widgets.end()) {
+				Widget* widget = it->second;
+
+				//if the dying widget contains the current focus.. null it!
+				if(widget->ContainsWidget(m_focus)) {
+					m_focus = NULL;
+				} 
+				if(widget->ContainsWidget(m_hoverTarget)) {
+					m_hoverTarget = NULL;
+				}
+				RemoveWidget(widget);
+				delete widget;
+			} else {
+				debug_log("Couldn't find widget \"%s\" for some reason.",m_freeWidgets[i]->GetName());
+			}
+		}
+
+		m_freeWidgets.clear();
 	}
 }

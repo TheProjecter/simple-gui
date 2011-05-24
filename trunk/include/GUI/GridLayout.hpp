@@ -82,7 +82,7 @@ namespace gui
 		bool RemoveColumnIfEmpty(uint32 column);//returns true if deleted the col
 
 		void RemoveEmptyColumnAndLines();
-		void Resize(int w, int h,bool save /* = true */);
+		void Resize(int w, int h,bool save = true);
 
 		bool IsLineEmpty(uint32 line) const;
 		bool IsColumnEmpty(uint32 column) const;

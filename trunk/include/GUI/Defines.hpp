@@ -36,7 +36,6 @@ namespace gui {
 
 			/* Widget specific events */
 			OnResize = 16 /*sf::Event::Count*/,
-			OnDoubleClick,
 			OnMove,
 			OnDrag,
 			OnShow,
@@ -48,6 +47,7 @@ namespace gui {
 			OnFocusLost,
 
 			OnValueChanged,
+			OnDoubleClick,
 
 			Count
 		};

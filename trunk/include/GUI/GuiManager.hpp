@@ -30,6 +30,8 @@ namespace gui {
 		void RegisterEvent(sf::Event& event);
 
 		bool AddWidget(Widget* widget);
+		void AddWidgetForced(Widget* widget);
+
 		void DeleteWidget(const std::string& name);
 		void DeleteWidget(Widget* widget);
 

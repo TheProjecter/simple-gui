@@ -3,6 +3,7 @@
 #include "../include/gui/Debug.hpp"
 #include "../include/gui/DefaultFactory.hpp"
 #include <tinyxml.h>
+#include <sstream>
 
 #include <iostream>
 
@@ -52,7 +53,7 @@ namespace gui {
 	{
 		//don't allow duplicate widgets!
 		if(GetWidgetByName(widget->GetName())) {
-			error_log("Couldn't create widget named %s. Duplicate exists!",widget->GetName());
+			error_log("Couldn't create widget named %s. Duplicate exists!",widget->GetName().c_str());
 			return false;
 		}
 		
@@ -597,8 +598,7 @@ namespace gui {
 			for(i = list.rbegin(); i != list.rend(); i++) {
 				if(i->second == skip) continue;
 
-				//allow hidden widgets!
-				if(IsCollision(i->second->m_rect,rect)) {
+				if(i->second->IsCollision(rect)) {
 					current = i->second;
 					break;
 				}
@@ -676,5 +676,21 @@ namespace gui {
 	bool GuiManager::IsEditEnabled() const
 	{
 		return m_editEnabled;
+	}
+
+	void GuiManager::AddWidgetForced( Widget* widget )
+	{
+		uint32 attempts = 1;
+		std::string name = widget->GetName();
+		while(true) {
+			if(!AddWidget(widget)) {
+				std::stringstream s;
+				s << name;
+
+				s << "_" << attempts;
+				widget->SetName(s.str());
+				attempts++;
+			} else return;
+		}
 	}
 }

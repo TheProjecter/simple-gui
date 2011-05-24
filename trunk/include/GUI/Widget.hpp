@@ -131,6 +131,8 @@ namespace gui {
 
 		virtual void Draw() const;
 
+		void FreeDeadWidgets();
+
 		virtual bool IsCollision(const Rect& rect) const;
 		virtual bool IsCollision(const Rect& rect, sf::Vector2f& normal) const;
 	protected:

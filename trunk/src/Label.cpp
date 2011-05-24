@@ -66,6 +66,7 @@ namespace gui {
 	{
 		m_type = LABEL;
 
+		m_text.SetSize(12);
 
 		//buttons particular size hint
 		m_sizeHint.x = 75;
