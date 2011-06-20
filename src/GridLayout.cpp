@@ -756,7 +756,9 @@ namespace gui
 		
 		for(uint32 i=0; i<m_items.size(); i++) {
 			for(uint32 j=0; j<m_items[i].size(); j++) {
-				m_items[i][j].Draw(s_gui->GetWindow());
+				StartClipping();
+					m_items[i][j].Draw(s_gui->GetWindow());
+				StopClipping();
 			}
 		}
 
@@ -1406,5 +1408,14 @@ namespace gui
 		ComputeCells();
 	}
 
+	uint16 GridLayout::GetRows() const
+	{
+		return m_items.size();
+	}
+
+	uint16 GridLayout::GetCols() const
+	{
+		return m_items[0].size();
+	}
 }
 

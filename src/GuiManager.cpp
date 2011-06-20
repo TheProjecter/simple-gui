@@ -73,18 +73,51 @@ namespace gui {
 			m_focus->m_isFocus = false;
 			m_focus->_HandleOnFocusLost();
 		}
+
 		Widget* widget = i->second;		
 		i++;
 		WidgetList::iterator itr = i.base();
+
 		m_widgets.erase(itr);
 		m_widgets[++index] = widget;
+
 		i = m_widgets.rbegin();
+
 		m_focus = widget;
 		m_focus->m_isFocus = true;
 		m_focus->SetId(i->first);
 		m_focus->OnFocus();
 	}
 
+	void GuiManager::SetHasFocus( const std::string& widget_name )
+	{
+		Widget* widget = GetWidgetByName(widget_name);
+		if(!widget) {
+			return;
+		}
+		WidgetList::reverse_iterator it(m_widgets.find(widget->GetId()));
+		
+		SetHasFocus(it);
+	}
+
+	void GuiManager::SetHasFocus( Widget* widget )
+	{
+		if(!widget) {
+			return;
+		}
+
+		WidgetList::reverse_iterator it(m_widgets.find(widget->GetId()));
+
+		if(it == m_widgets.rend()) {
+			return;
+		}
+		Widget* w = it->second;
+		if(it->second != widget) {
+			return;
+		}
+
+		SetHasFocus(it);
+	}
 	Widget* GuiManager::GetWidgetByName( const std::string& name ) const
 	{
 		//TODO: Expensive O(n) .. fix it!

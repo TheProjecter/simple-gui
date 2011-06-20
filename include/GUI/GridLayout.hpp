@@ -92,7 +92,11 @@ namespace gui
 		void SetPanning(uint32 panning);
 		uint32 GetPanning() const;
 
+		uint16 GetRows() const;
+		uint16 GetCols() const;
+
 		void SetParent(Widget* parent);
+		void SetPos(int x, int y, bool forceMove = false, bool save = true);
 	private:
 		bool IsExtremity(uint32 row, uint32 col) const;
 		bool IsCollision(const Rect& first) const;
@@ -104,7 +108,6 @@ namespace gui
 		void RemoveWidgetFromGrid(Widget* widget);
 		void Draw() const;
 
-		void SetPos(int x, int y, bool forceMove = false, bool save = true);
 		void SetPosForGrid();
 		bool HandleDragStop(Drag* drag);
 

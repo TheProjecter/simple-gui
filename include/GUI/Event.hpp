@@ -119,6 +119,12 @@ namespace gui
 		Rect m_oldRect;
 	};
 
+	class OnDestroy : public WidgetEvent
+	{
+	public:
+		OnDestroy(Widget* widget);
+	};
+
 	class OnMove : public WidgetEvent
 	{
 	public:

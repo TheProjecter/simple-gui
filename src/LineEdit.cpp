@@ -254,12 +254,14 @@ namespace gui
 		tmp1.SetSize(m_visibleText.GetSize());
 		tmp1.SetStyle(m_visibleText.GetStyle());
 
+		uint32 width = m_rect.w < 0 ? 0 : m_rect.w;
+
 		if(moveStartIndex) {
 			bool longWord = false;
 			int count = -1; 
 			tmp.SetText(m_totalText.substr(m_cursorStartIndex,m_visibleChars+1));
 			while(count < (int)m_visibleChars) {	//free 2 chars max to have space for 1.. should suffice
-				if(tmp.GetRect().GetWidth() > m_rect.w) {
+				if(tmp.GetRect().GetWidth() > width) {
 					count++;
 					longWord = true;
 					temp = m_totalText.substr(++m_cursorStartIndex,m_visibleChars);
@@ -291,12 +293,12 @@ namespace gui
  		while(true) 
 		{
 			//if the text fits the rect
-			if(tmp.GetRect().GetWidth() <= m_rect.w && tmp1.GetRect().GetWidth() >= m_rect.w) break;
+			if(tmp.GetRect().GetWidth() <= width && tmp1.GetRect().GetWidth() >= width) break;
 		
 			loopCount++;
 
 			//if it's smaller than it should add +1 to tmp and +2 to tmp1
-			if(tmp.GetRect().GetWidth() < m_rect.w) {
+			if(tmp.GetRect().GetWidth() < width) {
 				if(m_isPassword) { 
 					temp.clear(); 
 					temp.insert(0,m_visibleChars,'*'); 

@@ -66,8 +66,6 @@ namespace gui {
 	}
 	Widget::~Widget()
 	{
-		OnDestroy();
-
 		for(WidgetList::iterator it = m_widgets.begin(); 
 			it!= m_widgets.end();it++) 
 		{
@@ -951,7 +949,7 @@ namespace gui {
 
 	void Widget::OnDestroy()
 	{
-		//m_mediator.PostEvent(new Event::OnDestroy(this));
+		m_mediator.PostEvent(new gui::OnDestroy(this));
 	}
 
 	void Widget::OnHover()
@@ -1272,6 +1270,7 @@ namespace gui {
 
 	void Widget::Kill()
 	{
+		OnDestroy();
 		m_dead = true;
 
 		//kill all contained widgets!
@@ -1483,4 +1482,21 @@ namespace gui {
 
 		m_freeWidgets.clear();
 	}
+
+// 	Rect Widget::GetSmallestParentClipRect()
+// 	{
+// 		Rect temp = m_rect;
+// 		Widget* current = GetParent();
+// 		while(current) {
+// 			Rect& prect = current->NormalizeClipAreaView();
+// 
+// 			temp.x = std::max(temp.x,prect.x);
+// 			temp.y = std::max(temp.y,prect.y);
+// 			temp.w = std::min(temp.w,prect.w);
+// 			temp.h = std::min(temp.h,prect.h);
+// 
+// 			current = current->GetParent();
+// 		}
+// 		return temp;
+// 	}
 }
