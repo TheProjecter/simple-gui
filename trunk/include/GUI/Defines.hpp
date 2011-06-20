@@ -27,6 +27,7 @@ namespace gui {
 		SLIDER,
 		TITLE_BAR,
 		GRID_LAYOUT,
+		SPACER,
 		WIDGETS_COUNT
 	};
 

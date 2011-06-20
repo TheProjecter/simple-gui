@@ -314,6 +314,18 @@
 							>
 						</File>
 					</Filter>
+					<Filter
+						Name="Spacers"
+						>
+						<File
+							RelativePath="..\src\Spacer.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\include\GUI\Spacer.hpp"
+							>
+						</File>
+					</Filter>
 				</Filter>
 			</Filter>
 			<Filter

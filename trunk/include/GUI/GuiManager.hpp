@@ -63,6 +63,9 @@ namespace gui {
 		gui::uint32 GetOldHeight() const;
 
 		void SetIsEditEnabled(bool flag) { m_editEnabled = flag; } //TODO: DEBUG ONLY! Need to remove it!
+		
+		void SetHasFocus(const std::string& widget_name);
+		void SetHasFocus(Widget* widget);
 	private:
 		friend class GuiMgrParser;
 		typedef std::map<uint32, Widget*> WidgetList;

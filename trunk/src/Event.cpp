@@ -152,4 +152,9 @@ namespace gui
 	{
 		m_type = events::OnDoubleClick;
 	}
+
+	OnDestroy::OnDestroy( Widget* widget ): WidgetEvent(widget) 
+	{
+		m_type = gui::events::OnDestroy;
+	}
 }

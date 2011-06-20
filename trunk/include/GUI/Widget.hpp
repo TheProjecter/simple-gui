@@ -256,6 +256,7 @@ namespace gui {
 		void SaveUI(TiXmlNode* node) const;
 		void ResolveChildCollisions();
 		void SetLoading(bool val);
+		//Rect GetSmallestParentClipRect();
 	};
 
 
