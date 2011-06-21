@@ -4,6 +4,7 @@
 
 namespace gui
 {
+//TODO: useful comment
 	void Button::SetActiveImage()
 	{
 		sf::Color temp = m_shape.GetColor();
