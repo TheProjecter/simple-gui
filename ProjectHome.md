@@ -1,0 +1,2 @@
+A in-progress development of a gui system that will hopefully be very easy to use, and extensible.
+There is some basic progress so far, but nothing really impressive to view on the screen. I have to build the framework first.
